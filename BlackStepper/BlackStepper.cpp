@@ -9,7 +9,7 @@ using namespace std;
 // #define STEPPER_DEBUG
 
 #define STEP_INTERVAL 5000
-#define STEP_SIZE_FREQ 150
+#define STEP_SIZE_FREQ 50
 
 #define PERIOD_MAX 10000
 #define PERIOD_MIN 170

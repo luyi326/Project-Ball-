@@ -43,6 +43,7 @@ int main (int argc, char* argv[]) {
     sleep(4);
 
     motorPair->setBias(128);
+    motorPair->moveForward(speed);
 
     while (!motorPair->targetSpeedReached()) {
         motorPair->run();
@@ -51,6 +52,7 @@ int main (int argc, char* argv[]) {
     sleep(4);
 
     motorPair->setBias(-128);
+    motorPair->moveForward(speed);
 
     while (!motorPair->targetSpeedReached()) {
         motorPair->run();

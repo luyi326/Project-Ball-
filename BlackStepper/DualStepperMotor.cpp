@@ -30,7 +30,7 @@ void DualStepperMotor::moveForward(uint64_t speed) {
 	currentSpeed = speed;
 	leftStepper.run(1, speed + turnBias);
 	rightStepper.run(0, speed - turnBias);
-	cout << "Left target: " << speed + turnBias << " right target: " << speed - turnBias << endl;
+	//cout << "Left target: " << speed + turnBias << " right target: " << speed - turnBias << endl;
 }
 
 void DualStepperMotor::moveBackward(uint64_t speed) {
@@ -65,7 +65,7 @@ void DualStepperMotor::stop() {
 bool DualStepperMotor::targetSpeedReached() {
 	bool leftReached = leftStepper.targetSpeedReached();
 	bool rightReached = rightStepper.targetSpeedReached();
-	if (leftReached && rightReached) cout << "Left speed: " << leftStepper.getSpeed() << " Right speed: " << rightStepper.getSpeed() << endl;
+	//if (leftReached && rightReached) cout << "Left speed: " << leftStepper.getSpeed() << " Right speed: " << rightStepper.getSpeed() << endl;
 	// static clock_t left = -1, right = -1;
 
 	// if (leftReached && (left == -1)) {
