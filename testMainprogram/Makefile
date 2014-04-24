@@ -8,15 +8,16 @@ CFLAGS  = -g -Wall -std=gnu++0x
 # LFLAGS = -L /usr/local/lib/libblackLib.a
 
 # the build target executable:
-TARGET = motorTest
+TARGET = controlTest.out
 
 OBJDIR = ../BlackLib/
 STEPPERDIR = ../BlackStepper/
+JOYDIR = ../command_X/controller_halo/
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o BlackStepper.o DualStepperMotor.o $(OBJDIR)BlackLib.h $(STEPPERDIR)BlackStepper.h $(STEPPERDIR)DualStepperMotor.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o DualStepperMotor.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o
+$(TARGET): controller_halo.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o BlackStepper.o DualStepperMotor.o $(OBJDIR)BlackLib.h $(STEPPERDIR)BlackStepper.h $(STEPPERDIR)DualStepperMotor.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o DualStepperMotor.o controller_halo.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackUART.o
 
 BlackStepper.o: $(STEPPERDIR)BlackStepper.h
 	$(CC) $(CFLAGS) -c $(STEPPERDIR)BlackStepper.cpp
@@ -24,5 +25,10 @@ BlackStepper.o: $(STEPPERDIR)BlackStepper.h
 DualStepperMotor.o: $(STEPPERDIR)DualStepperMotor.h $(STEPPERDIR)BlackStepper.h
 	$(CC) $(CFLAGS) -c $(STEPPERDIR)DualStepperMotor.cpp
 
+controller_halo.o: $(JOYDIR)controller_halo.h $(OBJDIR)BlackUART.h
+	$(CC) $(CFLAGS) -c $(JOYDIR)controller_halo.cpp
+
+
+
 clean:
-	$(RM) $(TARGET) BlackStepper.o DualStepperMotor.o
+	$(RM) $(TARGET) BlackStepper.o DualStepperMotor.o controller_halo.o

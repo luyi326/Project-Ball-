@@ -14,9 +14,11 @@ OBJDIR = ../BlackLib/
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o $(OBJDIR)BlackLib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) basicUART4.cpp $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o
+$(TARGET): controller_halo.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o $(OBJDIR)BlackLib.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) basicUART4.cpp $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o controller_halo.o
 
+controller_halo.o: ./controller_halo/controller_halo.h $(OBJDIR)BlackLib.h
+	$(CC) $(CFLAGS) -c ./controller_halo/controller_halo.cpp
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) controller_halo.o

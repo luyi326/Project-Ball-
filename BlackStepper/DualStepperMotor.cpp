@@ -42,12 +42,12 @@ void DualStepperMotor::moveBackward(uint64_t speed) {
 
 void DualStepperMotor::setBias(int16_t bias) {
 	turnBias = bias;
-	cout << "turn bias = " << turnBias << endl;
-	if (currentDirection) {
-		this->moveForward(currentSpeed);
-	} else {
-		this->moveBackward(currentSpeed);
-	}
+	// cout << "turn bias = " << turnBias << endl;
+	// if (currentDirection) {
+	// 	this->moveForward(currentSpeed);
+	// } else {
+	// 	this->moveBackward(currentSpeed);
+	// }
 }
 
 void DualStepperMotor::run() {

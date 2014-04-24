@@ -1,11 +1,14 @@
 #include <iostream>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <math.h>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackStepper/DualStepperMotor.h"
+#include "../command_X/controller_halo/controller_halo.h"
 
 using namespace BlackLib;
 using namespace std;
@@ -29,8 +32,29 @@ int main (int argc, char* argv[]) {
     motorPair = new DualStepperMotor(GPIO_26, EHRPWM2A, GPIO_44, EHRPWM1B);
     cout << "Setup concluded" << endl;
 
+    Halo_XBee xbee;
+
+
     while (1) {
-        usleep(100);
+        xbee.refreshValue();
+        controller_state state = xbee.getControllerInfo();
+        // printf("axis0 = %d, axis3 = %d\n", state.AXIS_0, state.AXIS_3);
+        uint8_t direction = state.AXIS_3 < 127;
+        // uint8_t leftOrRight = state.AXIS_0 < 127;
+        int16_t move  = abs(127 - state.AXIS_3);
+        int16_t calculatedPeroid = 10000 - 77*move;
+        int16_t bias = 127 - state.AXIS_0;
+        // cout << "Moving ";
+        // if (direction) cout << "forward ";
+        // else cout << "backward ";
+        // cout << "speed " << move << " period " << calculatedPeroid;
+        // if (leftOrRight) cout << " left ";
+        // else cout << " right ";
+        // cout << "bias " << bias << endl;
+        motorPair->setBias(bias);
+        if (direction) motorPair->moveForward(calculatedPeroid);
+        else motorPair->moveBackward(calculatedPeroid);
+        usleep(500);
     }
 
     // uint64_t speed = 170;
