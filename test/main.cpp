@@ -7,18 +7,26 @@
 using namespace BlackLib;
 void exampleAndTiming_PWM();
 void test5Mhz();
+void test5Khz();
 
 int main () {
 	// exampleAndTiming_PWM();
-    test5Mhz();
+    //test5Mhz();
+    test5Khz();
     while(1) {}
 	return 0;
 }
 
-void test5Mhz() {
+void test5Khz() {
     BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2A);
     pwmLed.setDutyPercent(50.0);
-    pwmLed.setPeriodTime(10, BlackLib::microsecond);
+    pwmLed.setPeriodTime(200, BlackLib::microsecond);
+}
+
+void test5Mhz() {
+    BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2A);
+    pwmLed.setDutyPercent(60.0);
+    pwmLed.setPeriodTime(200, BlackLib::microsecond);
 }
 
 void exampleAndTiming_PWM()
