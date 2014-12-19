@@ -14,6 +14,7 @@ int main () {
     test5Mhz();
     //test5Khz();
     while(1) {}
+        ;
 	return 0;
 }
 
