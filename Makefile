@@ -10,10 +10,12 @@ CFLAGS  = -g -Wall -std=gnu++0x -lblackLib
 # the build target executable:
 TARGET = test
 
+OBJDIR = BlackLib/
+
 all: $(TARGET)
 
-$(TARGET): Timing.o BlackCore.o BlackPWM.o Timing.h /home/debian/workspace/BlackLib/v2_0/BlackLib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp Timing.o BlackCore.o BlackPWM.o
+$(TARGET): Timing.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackPWM.o Timing.h $(OBJDIR)BlackLib.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp Timing.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackPWM.o
 
 Timing.o: Timing.h
 	$(CC) $(CFLAGS) -c  Timing.cpp
