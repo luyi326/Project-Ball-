@@ -17,8 +17,8 @@ int main () {
 
 void test5Mhz() {
     BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2A);
-    pwmLed.setDutyPercent(60.0);
-    pwmLed.setPeriodTime(30, BlackLib::nanosecond);
+    pwmLed.setDutyPercent(50.0);
+    pwmLed.setPeriodTime(10, BlackLib::microsecond);
 }
 
 void exampleAndTiming_PWM()
