@@ -57,6 +57,7 @@ $RECYCLE.BIN/
 *.slo
 *.lo
 *.o
+!BlackLib/*.o
 *.obj
 
 # Precompiled Headers
