@@ -11,15 +11,15 @@ void test5Khz();
 
 int main () {
 	// exampleAndTiming_PWM();
-    test5Mhz();
-    //test5Khz();
+    //test5Mhz();
+    test5Khz();
     while(1) {}
         ;
 	return 0;
 }
 
 void test5Khz() {
-    BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2A);
+    BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2B);
     pwmLed.setDutyPercent(50.0);
     pwmLed.setPeriodTime(200, BlackLib::microsecond);
 }
