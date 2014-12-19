@@ -11,8 +11,8 @@ void test5Khz();
 
 int main () {
 	// exampleAndTiming_PWM();
-    //test5Mhz();
-    test5Khz();
+    test5Mhz();
+    //test5Khz();
     while(1) {}
 	return 0;
 }
