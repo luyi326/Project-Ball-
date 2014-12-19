@@ -10,18 +10,18 @@ void test5Mhz();
 void test5Khz();
 
 int main () {
-	// exampleAndTiming_PWM();
-    test5Mhz();
-    //test5Khz();
+	 exampleAndTiming_PWM();
+ //   test5Mhz();
+ //   test5Khz();
     while(1) {}
         ;
 	return 0;
 }
 
 void test5Khz() {
-    BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2A);
+    BlackLib::BlackPWM  pwmLed(BlackLib::EHRPWM2B);
     pwmLed.setDutyPercent(50.0);
-    pwmLed.setPeriodTime(200, BlackLib::microsecond);
+    pwmLed.setPeriodTime(500, BlackLib::microsecond);
 }
 
 void test5Mhz() {
@@ -74,7 +74,7 @@ void exampleAndTiming_PWM()
 
 
     pwmTiming.startMeasure("3. BlackPWM::setPeriodTime()");
-    pwmLed.setPeriodTime(300000000, BlackLib::picosecond);
+    pwmLed.setPeriodTime(30000, BlackLib::picosecond);
     pwmTiming.endMeasure("3. BlackPWM::setPeriodTime()");
 
     std::cout << "PERIOD after setting period time: \t" << pwmLed.getPeriodValue() << std::endl;
