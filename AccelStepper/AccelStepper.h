@@ -200,6 +200,7 @@
 #include "../BlackLib/BlackDef.h"
 #include "../BlackLib/BlackGPIO.h"
 using namespace BlackLib;
+using namespace std;
 //Assume GPIO_7 is not used
 #define GPIO_NULL BlackLib::GPIO_7
 
@@ -305,6 +306,8 @@ public:
     /// \param[in] forward void-returning procedure that will make a forward step
     /// \param[in] backward void-returning procedure that will make a backward step
     AccelStepper(void (*forward)(), void (*backward)());
+
+    ~AccelStepper();
 
     /// Set the target position. The run() function will try to move the motor (at most one step per call)
     /// from the current position to the target position set by the most

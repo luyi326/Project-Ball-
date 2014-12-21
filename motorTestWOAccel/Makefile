@@ -15,11 +15,8 @@ ACCELDIR = ../AccelStepper/
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o AccelStepper.o $(OBJDIR)BlackLib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp AccelStepper.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o
-
-AccelStepper.o: $(ACCELDIR)AccelStepper.h
-	$(CC) $(CFLAGS) -c $(ACCELDIR)AccelStepper.cpp
+$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackLib.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp $(OBJDIR)BlackCore.o $(OBJDIR)BlackPWM.o
 
 clean:
 	$(RM) $(TARGET)

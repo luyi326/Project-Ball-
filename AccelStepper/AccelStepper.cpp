@@ -279,6 +279,15 @@ AccelStepper::AccelStepper(void (*forward)(), void (*backward)())
     setAcceleration(1);
 }
 
+AccelStepper::~AccelStepper()
+{
+    delete _BLACKPinPtr[0];
+    delete _BLACKPinPtr[1];
+    delete _BLACKPinPtr[2];
+    delete _BLACKPinPtr[3];
+    delete _BLACKEnablePinPtr;
+}
+
 void AccelStepper::setMaxSpeed(float speed)
 {
     if (_maxSpeed != speed)
