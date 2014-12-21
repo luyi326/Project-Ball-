@@ -15,10 +15,10 @@ STEPPERDIR = ../BlackStepper/
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o BlackStepper.o $(OBJDIR)BlackLib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o
+$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o BlackStepper.o $(OBJDIR)BlackLib.h $(STEPPERDIR)BlackStepper.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o
 
-BlackStepper.o: $(ACCELDIR)BlackStepper.h
+BlackStepper.o: $(STEPPERDIR)BlackStepper.h
 	$(CC) $(CFLAGS) -c $(STEPPERDIR)BlackStepper.cpp
 
 clean:
