@@ -30,6 +30,7 @@ BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(d
 
 BlackStepper::~BlackStepper() {
 	setGPIOAndPWM(0, 0);
+	usleep(200);
 }
 
 void BlackStepper::run(bool direction, uint64_t speed) {
@@ -171,5 +172,5 @@ inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 		_frequency.setDutyPercent(60.0);
 	}
 	//Allow setup
-	usleep(200);
+	// usleep(200);
 }
