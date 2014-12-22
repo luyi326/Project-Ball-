@@ -22,4 +22,4 @@ BlackStepper.o: $(STEPPERDIR)BlackStepper.h
 	$(CC) $(CFLAGS) -c $(STEPPERDIR)BlackStepper.cpp
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) BlackStepper.o

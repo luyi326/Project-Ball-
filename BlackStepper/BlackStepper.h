@@ -20,10 +20,12 @@ private:
 
 	bool _target_direction;
 	uint64_t _target_speed;
+	uint64_t _target_freq;
 
 	bool _speedReached;
 
 	void setMovement(bool direction, uint64_t speed);
+	void setGPIOAndPWM(bool direction, uint64_t frequency);
 	unsigned long micros();
 
 public:

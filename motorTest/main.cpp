@@ -10,12 +10,14 @@ using namespace std;
 int main (int argc, char* argv[]) {
     AccelStepper stepper(AccelStepper::DRIVER, GPIO_31, GPIO_48);
     int pos = 3600;
-    int speed = 12000;
+    float speed = 12000.0f;
     if (argc == 2) {
-        speed = atoi(argv[1]);
+        speed = atof(argv[1]);
     }
+    cout << "Speed: " << speed << endl;
     stepper.setMaxSpeed(speed);
     stepper.setAcceleration(speed / 3);
+    stepper.setMinPulseWidth(20);
     while(1) {
         if (stepper.distanceToGo() == 0) {
             //usleep(500);
