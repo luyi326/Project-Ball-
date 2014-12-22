@@ -33,12 +33,12 @@
 	fragment@1 {
                 target = <&ocp>;	/* really ehrpwm0a */
                 __overlay__ {
-                  gpio_helper{
+                    gpio_helper{
                         compatible-"gpio-of-helper"
                         status = "okay";
                         pinctrl-names = "default";
                         pinctrl-0 = <&ebb_example>;
-                  };
+                    };
                 };
         };
 };
