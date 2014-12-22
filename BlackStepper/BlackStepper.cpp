@@ -4,11 +4,13 @@
 #include <unistd.h>
 #include "BlackStepper.h"
 
-#define STEP_INTERVAL 2000
+#define STEPPER_DEBUG 1
+
+#define STEP_INTERVAL 100000
 #define STEP_SIZE_FREQ 100
 
 #define PERIOD_MAX 10000
-#define PERIOD_MIN 150
+#define PERIOD_MIN 170
 
 #define PERIOD_MICRO_TO_FREQ(period) ((uint64_t)(1000000/period))
 #define FREQ_TO_PERIOD_MICRO(freq) ((uint64_t)(1000000/freq))
@@ -20,20 +22,15 @@ using namespace std;
 BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(direction, output, SecureMode), _frequency(frequency) {
 	_speedReached = 1;
 	_last_timestamp = micros();
+
 	_target_direction = _current_direction = 0;
-	_target_speed = _current_speed = 0;
-
-	// _direction.setValue((digitalValue)0);
-	// _frequency.setDutyPercent(100.0);
-	// _frequency.setPeriodTime(0, BlackLib::microsecond);
-	// _frequency.setDutyPercent(60.0);
-	// usleep(200);
-
-	setMovement(_current_direction, _current_speed);
+	_target_speed = _current_speed = PERIOD_MAX;
+	_target_freq = _current_freq = PERIOD_MICRO_TO_FREQ(_target_speed);
+	setGPIOAndPWM(0, 0);
 }
 
 BlackStepper::~BlackStepper() {
-
+	setGPIOAndPWM(0, 0);
 }
 
 void BlackStepper::run(bool direction, uint64_t speed) {
@@ -69,8 +66,8 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
 	_target_freq = PERIOD_MICRO_TO_FREQ(speed);
 
-	_current_speed = _frequency.getNumericPeriodValue() / 1000;
-	_current_direction = (bool)_direction.getNumericValue();
+	// _current_speed = _frequency.getNumericPeriodValue() / 1000;
+	// _current_direction = (bool)_direction.getNumericValue();
 	_speedReached = 0;
 
 	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
@@ -84,27 +81,45 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	if (micros() - _last_timestamp > STEP_INTERVAL) {
 		cout << "Updating motor motion, last timestamp: " << _last_timestamp << ", new timestamp: " << micros() << endl;
 		cout << "Target direction: " << _target_direction << ", target speed: " << _target_speed << endl;
-		int64_t _cal_new_freq = (int64_t)PERIOD_MICRO_TO_FREQ(_current_speed);
+		int _cal_new_freq = (int)_current_freq;
 
 		uint64_t real_step = STEP_SIZE_FREQ;
 		if (_current_direction == _target_direction) {
 			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), (uint64_t)STEP_SIZE_FREQ);
+			cout << "real step size set to " << real_step << endl;
 		}
 
 		cout << "Current direction: " << _current_direction << ", current speed: " << _current_speed << endl;
 
 		if (_current_direction == _target_direction && (uint64_t)_cal_new_freq < _target_freq) {
-			_cal_new_freq += real_step;
+			_cal_new_freq += (int)real_step;
+			cout << "Checkpoint 1.1: " << _cal_new_freq << endl;
 		} else {
-			_cal_new_freq -= real_step;
+			cout << _cal_new_freq << endl;
+			_cal_new_freq -= (int)real_step;
+			cout << "Checkpoint 1.2: " << _cal_new_freq << ", with step size " << (int)real_step << endl;
 		}
 
+		cout << "precalibration new frequency: " << _cal_new_freq << endl;
+
 		if (_cal_new_freq < 0) {
+			// cout << "Checkpoint 2" << endl;
 			_cal_new_freq = - _cal_new_freq;
 			_current_direction = !_current_direction;
 		}
+		// cout << "Checkpoint 3" << endl;
+		// cout << _cal_new_freq << endl;
 
-		_current_speed = FREQ_TO_PERIOD_MICRO(_cal_new_freq);
+		_current_freq = _cal_new_freq;
+		if (_cal_new_freq == 0) {
+			_current_speed = PERIOD_MAX;
+		} else {
+			_current_speed = FREQ_TO_PERIOD_MICRO(_cal_new_freq);
+		}
+		// cout << "Checkpoint 4" << endl;
+
+		if (_current_speed > PERIOD_MAX) _current_speed = PERIOD_MAX;
+		if (_current_speed < PERIOD_MIN) _current_speed = PERIOD_MIN;
 
 		cout << "New direction: " << _current_direction << ", new speed: " << _current_speed << endl;
 		cout << "Step size: " << real_step << endl;
@@ -127,6 +142,7 @@ inline unsigned long BlackStepper::micros() {
 }
 
 inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
+	cout << "Setting direction " << (digitalValue)direction << endl;
 	_direction.setValue((digitalValue)direction);
 	if ((frequency == 0) || (FREQ_TO_PERIOD_MICRO(frequency) >= PERIOD_MAX)) {
 		cout << "Period is too high, stop PWM" << endl;
@@ -135,7 +151,7 @@ inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 		_frequency.setDutyPercent(0.0);
 
 	} else if (FREQ_TO_PERIOD_MICRO(frequency) <= PERIOD_MIN) {
-		cout << "Period is too low, set period to 150 micros" << endl;
+		cout << "Period is too low, set period to 170 micros" << endl;
 		_frequency.setDutyPercent(100.0);
 		_frequency.setPeriodTime(PERIOD_MIN, microsecond);
 		_frequency.setDutyPercent(60.0);

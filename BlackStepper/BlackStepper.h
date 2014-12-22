@@ -15,6 +15,7 @@ private:
 	bool _current_direction;
 	//_current_speed refers to frequency
 	uint64_t _current_speed;
+	uint64_t _current_freq;
 
 	unsigned long _last_timestamp;
 
