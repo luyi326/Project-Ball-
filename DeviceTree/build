@@ -2,4 +2,4 @@
 
 echo "Compiling the overlay from .dts to .dtbo"
 
-dtc -O dtb -o EBB-GPIO-Example-00A-.dtbo -b 0 -@ EBB-GPIO-Example.dts
+dtc -O dtb -o EBB-GPIO-Example-00A0.dtbo -b 0 -@ EBB-GPIO-Example.dts
