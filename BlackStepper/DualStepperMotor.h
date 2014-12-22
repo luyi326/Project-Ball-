@@ -22,8 +22,12 @@ public:
 
 	void moveForward(uint64_t speed);
 	void moveBackward(uint64_t speed);
+	void run();
 	void turnLeft();
 	void turnRight();
+	void stop();
+
+	bool targetSpeedReached();
 
 	~DualStepperMotor();
 };

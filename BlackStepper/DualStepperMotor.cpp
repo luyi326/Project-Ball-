@@ -35,3 +35,17 @@ void DualStepperMotor::turnLeft() {
 void DualStepperMotor::turnRight() {
 
 }
+
+void DualStepperMotor::run() {
+	leftStepper.run();
+	rightStepper.run();
+}
+
+void DualStepperMotor::stop() {
+	leftStepper.run(1, 0);
+	rightStepper.run(0, 0);
+}
+
+bool DualStepperMotor::targetSpeedReached() {
+	return (leftStepper.targetSpeedReached() && rightStepper.targetSpeedReached());
+}
