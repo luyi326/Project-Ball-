@@ -65,8 +65,6 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
 	_target_freq = PERIOD_MICRO_TO_FREQ(speed);
 
-	// _current_speed = _frequency.getNumericPeriodValue() / 1000;
-	// _current_direction = (bool)_direction.getNumericValue();
 	_speedReached = 0;
 
 	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
