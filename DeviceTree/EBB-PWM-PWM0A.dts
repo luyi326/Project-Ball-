@@ -11,37 +11,34 @@
 /plugin/;
 
 / {
-   	compatible = "ti,beaglebone", "ti,beaglebone-black";
+    compatible = "ti,beaglebone", "ti,beaglebone-black";
 
         /* identification */
-        part-number = "BB-EHRPWM0A";
+        part-number = "EBB-PWM-PWM0A";
         version = "00A0";
 
-        /* state the resources this cape uses */
-        exclusive-use =
-                /* the pin header uses */
-                "P9.22",        /* EHRPWM0A */
-                /* the hardware ip uses */
-                "ehrpwm0A";
 
         fragment@0 {
                 target = <&am33xx_pinmux>;
                 __overlay__ {
-                        bb_ehrpwm0a_pins: pinmux_bb_ehrpwm0a_pins {
+                        ebb_PWM: EBB-PWM-PWM0A {
                                 pinctrl-single,pins = <
-                                        0x150 0x33 /* P9.22 ehrpwm0A, PULLDOWN | MODE 3 */
+                                        0x150 0x03 /* P9.22 turn it as GPIO, PULLDOWN | MODE 3 */
                                         
                                 >;
                         };
                 };
         };
 
-	fragment@1 {
-                target = <&ocp>;	/* really ehrpwm0a */
+    fragment@1 {
+                target = <&ocp>;    /* really ehrpwm0a */
                 __overlay__ {
+                    gpio_helper{
+                        compatible-"gpio-of-helper"
                         status = "okay";
                         pinctrl-names = "default";
-                        pinctrl-0 = <&bb_ehrpwm0a_pins>;
+                        pinctrl-0 = <&ebb_PWM>;
+                    };
                 };
         };
 };
