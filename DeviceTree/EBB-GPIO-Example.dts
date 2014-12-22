@@ -14,22 +14,16 @@
    	compatible = "ti,beaglebone", "ti,beaglebone-black";
 
         /* identification */
-        part-number = "BB-EHRPWM0A";
+        part-number = "EBB-GPIO-Example";
         version = "00A0";
 
-        /* state the resources this cape uses */
-        exclusive-use =
-                /* the pin header uses */
-                "P9.22",        /* EHRPWM0A */
-                /* the hardware ip uses */
-                "ehrpwm0A";
 
         fragment@0 {
                 target = <&am33xx_pinmux>;
                 __overlay__ {
-                        bb_ehrpwm0a_pins: pinmux_bb_ehrpwm0a_pins {
+                        ebb_example: EBB_GPIO_Example {
                                 pinctrl-single,pins = <
-                                        0x150 0x33 /* P9.22 ehrpwm0A, PULLDOWN | MODE 3 */
+                                        0x070 0x07 /* P9.11 turn it as GPIO, PULLDOWN | MODE 7 */
                                         
                                 >;
                         };
@@ -39,9 +33,12 @@
 	fragment@1 {
                 target = <&ocp>;	/* really ehrpwm0a */
                 __overlay__ {
+                  gpio_helper{
+                        compatible-"gpio-of-helper"
                         status = "okay";
                         pinctrl-names = "default";
-                        pinctrl-0 = <&bb_ehrpwm0a_pins>;
+                        pinctrl-0 = <&ebb_example>;
+                  };
                 };
         };
 };
