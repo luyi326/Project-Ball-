@@ -10,8 +10,6 @@
 #define PVision_h
 
 #include <iostream>
-#include "../BlackLib/BlackLib.h"
-#include "../BlackLib/BlackI2C.h"
 
 // bit flags for blobs
 #define BLOB1 0x01
@@ -46,17 +44,20 @@ public:
 	Blob Blob4;
 
 private:
+	int i2cDescriptor;
+
   	// per object data
 	int IRsensorAddress;
 	int IRslaveAddress;
 	uint8_t data_buf[16];
 	int i;
 	int s;
-	BlackI2C i2c;
 
 	void Write_2bytes(uint8_t d1, uint8_t d2);
 	uint8_t blobcount; // returns the number of blobs found - reads the sensor
 
+	bool initI2CBus();
+	bool busReady;
 };
 
 #endif

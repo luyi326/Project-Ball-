@@ -8,40 +8,69 @@
 ******************************************************************************/
 #include "PVision.h"
 #include <chrono>
+
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
 
 #define SENSOR_ADDRESS 0xB0
+
+#define I2C_BUS_NAME "/dev/i2c-1".c_str()
 
 /******************************************************************************
 * Private methods
 ******************************************************************************/
 void PVision::Write_2bytes(uint8_t d1, uint8_t d2)
 {
-    // Wire.beginTransmission(IRslaveAddress);
-    // Wire.send(d1); Wire.send(d2);
-    // Wire.endTransmission();
-    i2c.writeByte(IRslaveAddress, d1);
-    i2c.writeByte(IRslaveAddress, d2);
+    if (!busReady) {
+        cout << "PVision::Write_2bytes:: Bus not ready, doing nothing" << endl;
+        return;
+    }
+    char* word = char[2];
+    word[0] = d1;
+    word[1] = d2;
+    if (write(i2cDescriptor, word, 2) != 1) {
+        cout << "PVision::Write_2bytes:: write fail";
+        cout << ", error message: " << strerror(errno) << endl;
+    }
 }
 
+bool PVision::initI2CBus() {
+    i2cDescriptor = open(I2C_BUS_NAME, O_RDWR);
+    if (i2cDescriptor < 0) {
+        cout << "PVision::initI2CBus::Open i2c bus " << I2C_BUS_NAME;
+        cout << " error, error message: " << strerror(errno) << endl;
+        return false;
+    }
+    if (ioctl(i2cDescriptor, I2C_SLAVE, SENSOR_ADDRESS) < 0) {
+        cout << "PVision::initI2CBus::Init slave " << SENSOR_ADDRESS;
+        cout << "error, error message: " << strerror(errno) << endl;
+        return false;
+    }
+    busReady = true;
+    return true;
+}
 
 /******************************************************************************
 * Constructor
 ******************************************************************************/
-PVision::PVision(i2cName port) : i2c(port, SENSOR_ADDRESS)
+PVision::PVision(i2cName port) : busReady(false)
 {
 	Blob1.number = 1;
 	Blob2.number = 2;
 	Blob3.number = 3;
 	Blob4.number = 4;
-    i2c.open(ReadWrite | NonBlock);
+    initI2CBus();
 }
 
 /******************************************************************************
 * Destructor
 ******************************************************************************/
 PVision::~PVision() {
-    i2c.close();
+    close(i2cDescriptor);
 }
 
 /******************************************************************************
@@ -50,6 +79,10 @@ PVision::~PVision() {
 // init the PVision sensor
 void PVision::init ()
 {
+    if (!busReady) {
+        cout << "PVision::init:: Bus not ready, doing nothing" << endl;
+        return;
+    }
     IRsensorAddress = SENSOR_ADDRESS;
     IRslaveAddress = IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
 
@@ -66,11 +99,16 @@ void PVision::init ()
 
 uint8_t PVision::read()
 {
-    //IR sensor read
-    // Wire.beginTransmission(IRslaveAddress);
-    // Wire.send(0x36);
-    // Wire.endTransmission();
-    i2c.writeByte(IRslaveAddress, 0x36);
+    if (!busReady) {
+        cout << "PVision::read:: Bus not ready, doing nothing" << endl;
+        return;
+    }
+    char requestByte = 0x36;
+    if (write(i2cDescriptor, &requestByte, 1) != 1) {
+        cout << "PVision::read:: write fail";
+        cout << ", error message: " << strerror(errno) << endl;
+        return 0xFF;
+    }
 
     // Wire.requestFrom(IRslaveAddress, 16);        // Request the 2 byte heading (MSB comes first)
 
@@ -87,10 +125,15 @@ uint8_t PVision::read()
     //     i++;
     // }
 
-    while(i < 16)
-    {
-        data_buf[i] = i2c.readByte(IRslaveAddress);
-        i++;
+    // while(i < 16)
+    // {
+    //     data_buf[i] = i2c.readByte(IRslaveAddress);
+    //     i++;
+    // }
+    if (read(i2cDescriptor, data_buf, 16) < 16) {
+        cout << "PVision::read:: read fail";
+        cout << ", error message: " << strerror(errno) << endl;
+        return 0xFF;
     }
 
     blobcount = 0;
