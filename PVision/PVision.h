@@ -31,9 +31,10 @@ class PVision
 {
 
 public:
-  	PVision(i2cName port);
+  	PVision();
   	~PVision();
 
+  	bool isBusReady();
 	void init();   // returns true if the connection to the sensor established correctly
 	uint8_t read();   // updated the blobs, and returns the number of blobs detected
 
@@ -47,8 +48,8 @@ private:
 	int i2cDescriptor;
 
   	// per object data
-	int IRsensorAddress;
-	int IRslaveAddress;
+	// int IRsensorAddress;
+	// int IRslaveAddress;
 	uint8_t data_buf[16];
 	int i;
 	int s;
