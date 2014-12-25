@@ -23,13 +23,13 @@ DualStepperMotor::~DualStepperMotor() {
 
 
 void DualStepperMotor::moveForward(uint64_t speed) {
-	rightStepper.run(1, speed);
+	rightStepper.run(0, speed);
 	leftStepper.run(0, speed);
 }
 
 void DualStepperMotor::moveBackward(uint64_t speed) {
 	leftStepper.run(1, speed);
-	rightStepper.run(0, speed);
+	rightStepper.run(1, speed);
 }
 
 void DualStepperMotor::turnLeft() {
