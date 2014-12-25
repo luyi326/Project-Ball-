@@ -16,7 +16,7 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 
-#define SENSOR_ADDRESS 0xB0
+#define SENSOR_ADDRESS 0x58
 
 #define I2C_BUS_NAME "/dev/i2c-1".c_str()
 
@@ -57,7 +57,7 @@ bool PVision::initI2CBus() {
 /******************************************************************************
 * Constructor
 ******************************************************************************/
-PVision::PVision(i2cName port) : busReady(false)
+PVision::PVision() : busReady(false)
 {
 	Blob1.number = 1;
 	Blob2.number = 2;
@@ -83,8 +83,8 @@ void PVision::init ()
         cout << "PVision::init:: Bus not ready, doing nothing" << endl;
         return;
     }
-    IRsensorAddress = SENSOR_ADDRESS;
-    IRslaveAddress = IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
+    // IRsensorAddress = SENSOR_ADDRESS;
+    // IRslaveAddress = IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
 
     // Wire.begin();
     // IR sensor initialize
@@ -95,6 +95,10 @@ void PVision::init ()
     Write_2bytes(0x1A,0x40); usleep(10000);
     Write_2bytes(0x33,0x33); usleep(10000);
     usleep(100000);
+}
+
+bool PVision::isBusReady() {
+    return busReady;
 }
 
 uint8_t PVision::read()
