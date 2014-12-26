@@ -1,6 +1,6 @@
 #include <iostream>
 #include <unistd.h>
-#include "../PVision/Pvision.h"
+#include "../PVision/PVision.h"
 
 using namespace std;
 
@@ -13,7 +13,7 @@ int main (int argc, char* argv[]) {
 	}
 
 	while (1) {
-		uint8_t result = vision.read();
+		uint8_t result = vision.readBlob();
 
 		if (result & BLOB1)
 		{
@@ -36,6 +36,8 @@ int main (int argc, char* argv[]) {
 			cout << "BLOB4 detected. X:" << vision.Blob4.X << " Y:" << vision.Blob4.Y;
 			cout << "Size: " << vision.Blob4.Size << endl;
 		}
+
+		usleep(500000);
 
 	}
 	return 0;

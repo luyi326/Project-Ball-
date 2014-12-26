@@ -15,7 +15,7 @@ PIXDIR = ../PVision/
 all: $(TARGET)
 
 $(TARGET): PVision.o $(PIXDIR)PVision.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp Pvision.o
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp PVision.o
 
 PVision.o: $(PIXDIR)PVision.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)PVision.cpp
