@@ -7,8 +7,10 @@
 * Includes
 ******************************************************************************/
 #include "PVision.h"
+#include <iostream>
 #include <chrono>
-
+#include <cstdio>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -16,9 +18,11 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 
+using namespace std;
+
 #define SENSOR_ADDRESS 0x58
 
-#define I2C_BUS_NAME "/dev/i2c-1".c_str()
+#define I2C_BUS_NAME "/dev/i2c-1"
 
 /******************************************************************************
 * Private methods
@@ -29,10 +33,10 @@ void PVision::Write_2bytes(uint8_t d1, uint8_t d2)
         cout << "PVision::Write_2bytes:: Bus not ready, doing nothing" << endl;
         return;
     }
-    char* word = char[2];
+    char word[2];
     word[0] = d1;
     word[1] = d2;
-    if (write(i2cDescriptor, word, 2) != 1) {
+    if (write(i2cDescriptor, word, 2) == -1) {
         cout << "PVision::Write_2bytes:: write fail";
         cout << ", error message: " << strerror(errno) << endl;
     }
@@ -70,7 +74,10 @@ PVision::PVision() : busReady(false)
 * Destructor
 ******************************************************************************/
 PVision::~PVision() {
-    close(i2cDescriptor);
+    if (close(i2cDescriptor) == -1) {
+        cout << "PVision::~PVision:: write fail";
+        cout << ", error message: " << strerror(errno) << endl;
+    }
 }
 
 /******************************************************************************
@@ -101,17 +108,17 @@ bool PVision::isBusReady() {
     return busReady;
 }
 
-uint8_t PVision::read()
+uint8_t PVision::readBlob()
 {
     if (!busReady) {
         cout << "PVision::read:: Bus not ready, doing nothing" << endl;
-        return;
+        return 0x00;
     }
     char requestByte = 0x36;
-    if (write(i2cDescriptor, &requestByte, 1) != 1) {
+    if (write(i2cDescriptor, &requestByte, 1) == -1) {
         cout << "PVision::read:: write fail";
         cout << ", error message: " << strerror(errno) << endl;
-        return 0xFF;
+        return 0x00;
     }
 
     // Wire.requestFrom(IRslaveAddress, 16);        // Request the 2 byte heading (MSB comes first)
@@ -137,7 +144,7 @@ uint8_t PVision::read()
     if (read(i2cDescriptor, data_buf, 16) < 16) {
         cout << "PVision::read:: read fail";
         cout << ", error message: " << strerror(errno) << endl;
-        return 0xFF;
+        return 0x00;
     }
 
     blobcount = 0;
