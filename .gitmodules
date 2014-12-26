@@ -4,3 +4,7 @@
 [submodule "boneDeviceTree"]
 	path = boneDeviceTree
 	url = git://github.com/derekmolloy/boneDeviceTree.git
+[submodule "exploringBB"]
+	path = exploringBB
+	url = git@github.com:derekmolloy/exploringBB.git
+
