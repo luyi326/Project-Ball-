@@ -1,0 +1,6 @@
+[submodule "adafruit-beaglebone-io-python"]
+	path = adafruit-beaglebone-io-python
+	url = https://github.com/adafruit/adafruit-beaglebone-io-python
+[submodule "boneDeviceTree"]
+	path = boneDeviceTree
+	url = git://github.com/derekmolloy/boneDeviceTree.git
