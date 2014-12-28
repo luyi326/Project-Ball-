@@ -35,8 +35,10 @@ public:
   	~PVision();
 
   	bool isBusReady();
+  	bool isSensorReady();
 	void init();   // returns true if the connection to the sensor established correctly
 	uint8_t readBlob();   // updated the blobs, and returns the number of blobs detected
+	void reset();
 
 	// Make these public
 	Blob Blob1;
@@ -54,11 +56,12 @@ private:
 	int i;
 	int s;
 
-	void Write_2bytes(uint8_t d1, uint8_t d2);
+	bool Write_2bytes(uint8_t d1, uint8_t d2);
 	uint8_t blobcount; // returns the number of blobs found - reads the sensor
 
 	bool initI2CBus();
 	bool busReady;
+	bool sensorReady;
 };
 
 #endif

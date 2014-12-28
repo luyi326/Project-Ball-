@@ -27,11 +27,10 @@ using namespace std;
 /******************************************************************************
 * Private methods
 ******************************************************************************/
-void PVision::Write_2bytes(uint8_t d1, uint8_t d2)
-{
+bool PVision::Write_2bytes(uint8_t d1, uint8_t d2) {
     if (!busReady) {
         cout << "PVision::Write_2bytes:: Bus not ready, doing nothing" << endl;
-        return;
+        return false;
     }
     char word[2];
     word[0] = d1;
@@ -39,7 +38,9 @@ void PVision::Write_2bytes(uint8_t d1, uint8_t d2)
     if (write(i2cDescriptor, word, 2) == -1) {
         cout << "PVision::Write_2bytes:: write fail";
         cout << ", error message: " << strerror(errno) << endl;
+        return false;
     }
+    return true;
 }
 
 bool PVision::initI2CBus() {
@@ -61,8 +62,7 @@ bool PVision::initI2CBus() {
 /******************************************************************************
 * Constructor
 ******************************************************************************/
-PVision::PVision() : busReady(false)
-{
+PVision::PVision() : busReady(false), sensorReady(false) {
 	Blob1.number = 1;
 	Blob2.number = 2;
 	Blob3.number = 3;
@@ -84,8 +84,7 @@ PVision::~PVision() {
 * Public methods
 ******************************************************************************/
 // init the PVision sensor
-void PVision::init ()
-{
+void PVision::init () {
     if (!busReady) {
         cout << "PVision::init:: Bus not ready, doing nothing" << endl;
         return;
@@ -95,12 +94,14 @@ void PVision::init ()
 
     // Wire.begin();
     // IR sensor initialize
-    Write_2bytes(0x30,0x01); usleep(10000);
-    Write_2bytes(0x30,0x08); usleep(10000);
-    Write_2bytes(0x06,0x90); usleep(10000);
-    Write_2bytes(0x08,0xC0); usleep(10000);
-    Write_2bytes(0x1A,0x40); usleep(10000);
-    Write_2bytes(0x33,0x33); usleep(10000);
+    bool writeResult = true;
+    writeResult &= Write_2bytes(0x30,0x01); usleep(10000);
+    writeResult &= Write_2bytes(0x30,0x08); usleep(10000);
+    writeResult &= Write_2bytes(0x06,0x90); usleep(10000);
+    writeResult &= Write_2bytes(0x08,0xC0); usleep(10000);
+    writeResult &= Write_2bytes(0x1A,0x40); usleep(10000);
+    writeResult &= Write_2bytes(0x33,0x33); usleep(10000);
+    sensorReady = writeResult;
     usleep(100000);
 }
 
@@ -108,10 +109,17 @@ bool PVision::isBusReady() {
     return busReady;
 }
 
-uint8_t PVision::readBlob()
-{
+bool PVision::isSensorReady() {
+    return sensorReady;
+}
+
+uint8_t PVision::readBlob() {
     if (!busReady) {
         cout << "PVision::read:: Bus not ready, doing nothing" << endl;
+        return 0x00;
+    }
+    if (!sensorReady) {
+        cout << "PVision::read:: Sensor not ready, doing nothing" << endl;
         return 0x00;
     }
     char requestByte = 0x36;
@@ -195,3 +203,6 @@ uint8_t PVision::readBlob()
     return blobcount;
 }
 
+void PVision::reset() {
+
+}
