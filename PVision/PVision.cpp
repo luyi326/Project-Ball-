@@ -141,11 +141,17 @@ uint8_t PVision::readBlob()
     //     data_buf[i] = i2c.readByte(IRslaveAddress);
     //     i++;
     // }
-    if (read(i2cDescriptor, data_buf, 16) < 16) {
-        cout << "PVision::read:: read fail";
+    int readResult = read(i2cDescriptor, data_buf, 16);
+    if (readResult < 0) {
+        cout << "PVision::read:: read fail, read " << readResult << " bytes";
         cout << ", error message: " << strerror(errno) << endl;
         return 0x00;
     }
+    cout << "Got " << readResult << " byte" << endl;
+    for (i = 0; i < 16; i++) {
+        cout << "|0x" << std::hex << (int)data_buf[i];
+    }
+    cout << "|" << endl;
 
     blobcount = 0;
 
