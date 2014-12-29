@@ -16,7 +16,8 @@ using namespace BlackLib;
 class IRRim {
 public:
 	/**
-	 *
+	 *	Constructor of IRRim
+	 *	mux is an array of mux GPIO bits from MSB to LSB
 	 */
 	IRRim(gpioName mux[NUM_SEL], string calibrationFiles[NUM_IR]);
 

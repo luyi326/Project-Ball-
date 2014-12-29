@@ -39,7 +39,7 @@ void IRRim::poll() {
 
 void IRRim::nextSensor() {
 	uint8_t current = 0;
-	for (vector<BlackGPIO>::reverse_iterator it = _muxs.rbegin(); it != _muxs.rend(); ++it) {
+	for (vector<BlackGPIO>::iterator it = _muxs.begin(); it != _muxs.end(); ++it) {
 		current |= (*it).getNumericValue();
 		current <<= 1;
 	}
@@ -53,8 +53,11 @@ void IRRim::nextSensor() {
 }
 
 void IRRim::select(uint8_t num) {
+	if (num < 0) num = 0;
+	if (num > NUM_IR) num = NUM_IR - 1;
+
 	uint8_t mask = 0x01;
-	for (vector<BlackGPIO>::iterator it = _muxs.begin(); it != _muxs.end(); ++it) {
+	for (vector<BlackGPIO>::reverse_iterator it = _muxs.rbegin(); it != _muxs.rend(); ++it) {
 		(*it).setValue((digitalValue)(num & mask));
 		num >>= 1;
 	}
