@@ -1,4 +1,5 @@
 #include <iostream>
+#include <signal.h>
 #include <unistd.h>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
@@ -8,8 +9,22 @@
 using namespace BlackLib;
 using namespace std;
 
+BlackStepper* stepper;
+
+void sig_handler(int signo)
+{
+  if (signo == SIGINT)
+    printf("received SIGINT\n");
+    delete stepper;
+}
+
+
 int main (int argc, char* argv[]) {
-    BlackStepper stepper(GPIO_44, EHRPWM1B);
+    // Register sigint
+    if (signal(SIGINT, sig_handler) == SIG_ERR)
+        cout << "Cannot register SIGINT handler" << endl;
+
+    stepper = new BlackStepper(GPIO_44, EHRPWM1B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 400;
