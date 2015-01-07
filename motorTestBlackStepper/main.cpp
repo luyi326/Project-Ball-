@@ -1,5 +1,6 @@
 #include <iostream>
 #include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
@@ -13,9 +14,11 @@ BlackStepper* stepper;
 
 void sig_handler(int signo)
 {
-  if (signo == SIGINT)
-    printf("received SIGINT\n");
-    delete stepper;
+    if (signo == SIGINT) {
+        cout << "\nReceived SIGINT" << endl;
+        delete stepper;
+        exit(0);
+    }
 }
 
 
@@ -34,47 +37,49 @@ int main (int argc, char* argv[]) {
         speed = atoi(argv[2]);
     }
 
-    stepper.run(direction, speed);
-    while (!stepper.targetSpeedReached()) {
-    	// cout << "last stepper speed: " << stepper.getSpeed() << endl;
-    	stepper.run();
+    stepper->run(direction, speed);
+    while (!stepper->targetSpeedReached()) {
+    	// cout << "last stepper speed: " << stepper->getSpeed() << endl;
+    	stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper.run(!direction, speed);
-    while (!stepper.targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper.getSpeed() << endl;
-        stepper.run();
+    stepper->run(!direction, speed);
+    while (!stepper->targetSpeedReached()) {
+        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+        stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper.run(direction, 200);
-    while (!stepper.targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper.getSpeed() << endl;
-        stepper.run();
+    stepper->run(direction, 200);
+    while (!stepper->targetSpeedReached()) {
+        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+        stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper.run(direction, 400);
-    while (!stepper.targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper.getSpeed() << endl;
-        stepper.run();
+    stepper->run(direction, 400);
+    while (!stepper->targetSpeedReached()) {
+        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+        stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper.run(direction, 200);
-    while (!stepper.targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper.getSpeed() << endl;
-        stepper.run();
+    stepper->run(direction, 200);
+    while (!stepper->targetSpeedReached()) {
+        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+        stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper.run(!direction, 200);
-    while (!stepper.targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper.getSpeed() << endl;
-        stepper.run();
+    stepper->run(!direction, 200);
+    while (!stepper->targetSpeedReached()) {
+        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+        stepper->run();
     }
     cout << "Motor in position" << endl;
     sleep(4);
+
+    delete stepper;
 	return 0;
 }
