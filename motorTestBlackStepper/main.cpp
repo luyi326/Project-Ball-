@@ -9,7 +9,7 @@ using namespace BlackLib;
 using namespace std;
 
 int main (int argc, char* argv[]) {
-    BlackStepper stepper(GPIO_44, EHRPWM2B);
+    BlackStepper stepper(GPIO_44, EHRPWM1B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 400;
