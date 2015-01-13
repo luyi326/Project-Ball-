@@ -69,7 +69,7 @@ double ADXL345::readAxis(ADX_Axis axis) {
 		case ADX_Z:
 			writeResult &= write2Byte(Register_Z0, Register_Z1);
 			break;
-		case default:
+		default:
 			cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
 			writeResult = false;
 			break;

@@ -6,7 +6,7 @@
 typedef enum {
 	ADX_X = 0,
 	ADX_Y,
-	ADX_z
+	ADX_Z
 } ADX_Axis;
 
 class ADXL345 {

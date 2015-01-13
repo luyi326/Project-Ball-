@@ -42,7 +42,7 @@ void HMC5883L::setMeasurementMode(uint8_t mode) {
 	writeToAddress(ModeRegister, mode);
 }
 
-MagnetometerRaw ReadRawAxis() {
+MagnetometerRaw HMC5883L::ReadRawAxis() {
     bool writeResult = writeByte(DataRegisterBegin);
     MagnetometerRaw raw = MagnetometerRaw();
     if (!writeResult) {
@@ -61,7 +61,7 @@ MagnetometerRaw ReadRawAxis() {
     return raw;
 }
 
-MagnetometerScaled ReadScaledAxis() {
+MagnetometerScaled HMC5883L::ReadScaledAxis() {
     MagnetometerRaw raw = ReadRawAxis();
     MagnetometerScaled scaled = MagnetometerScaled();
     scaled.XAxis = raw.XAxis * m_Scale;
@@ -113,8 +113,10 @@ void HMC5883L::setScale(float gauss) {
 		m_Scale = 4.35;
 	}
 	else
-		return ErrorCode_1_Num;
-
+	{
+		cout << "HMC5883L::setScale::Invalid gauss" << endl;
+		return;
+	}
 	// Setting is in the top 3 bits of the register.
 	regValue <<= 5;
 	writeToAddress(ConfigurationRegisterB, regValue);
