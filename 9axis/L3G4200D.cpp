@@ -1,6 +1,6 @@
 #include "L3G4200D.h"
-#include <chrono>
-#include <cstdio>
+// #include <chrono>
+// #include <cstdio>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -70,13 +70,17 @@ void L3G4200D::init() {
 void L3G4200D::sample() {
     // assert the MSB of the address to get the gyro
     // to do slave-transmit subaddress updating.
-    //
+    writeByte(L3G4200D_OUT_X_L | (1 << 7));
     uint8_t buffer[6];
     int readResult = read(i2cDescriptor, buffer, 6);
     if (readResult < 6) {
         cout << "L3G4200D::sample::read less than 6 bits, read " << readResult << " bits" << endl;
         return;
     }
+    // for (int i = 0; i < 6; i++) {
+    //  cout << hex << (int)buffer[i] << ":";
+    // }
+    // cout << endl;
 
     uint8_t xla = buffer[0];
     uint8_t xha = buffer[1];

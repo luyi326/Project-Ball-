@@ -28,8 +28,9 @@ using namespace std;
 #define HMC_ADDR (0x3C >> 1) //Essentially 0x1E
 #define I2C_BUS_NAME "/dev/i2c-1"
 
-HMC5883L::HMC5883L() : busReady(false), sensorReady(false) {
+HMC5883L::HMC5883L() : busReady(false), sensorReady(false), m_Scale(1.0f) {
 	initI2CBus();
+	setMeasurementMode(Measurement_Continuous);
 }
 
 HMC5883L::~HMC5883L() {
@@ -44,6 +45,7 @@ void HMC5883L::setMeasurementMode(uint8_t mode) {
 
 MagnetometerRaw HMC5883L::ReadRawAxis() {
     bool writeResult = writeByte(DataRegisterBegin);
+    // usleep(100);
     MagnetometerRaw raw = MagnetometerRaw();
     if (!writeResult) {
         cout << "HMC5883L::ReadRawAxis::write fail" << endl;
@@ -55,6 +57,10 @@ MagnetometerRaw HMC5883L::ReadRawAxis() {
         cout << "HMC5883L::ReadRawAxis::read less than 6 bits, read " << readResult << " bits" << endl;
         return raw;
     }
+    // for (int i = 0; i < 6; i++) {
+    // 	cout << hex << (int)buffer[i] << ":";
+    // }
+    // cout << endl;
     raw.XAxis = (buffer[0] << 8) | buffer[1];
     raw.ZAxis = (buffer[2] << 8) | buffer[3];
     raw.YAxis = (buffer[4] << 8) | buffer[5];
