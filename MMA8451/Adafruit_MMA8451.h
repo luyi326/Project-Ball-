@@ -21,10 +21,13 @@
 #include <stdint.h>
 #include "Adafruit_Sensor.h"
 
+#ifndef MMA8451_H
+#define MMA8451_H
+
 /*=========================================================================
     I2C ADDRESS/BITS
     -----------------------------------------------------------------------*/
-#define MMA8451_DEFAULT_ADDRESS                 (0x1D)    // if A is GND, its 0x1C
+#define MMA8451_DEFAULT_ADDRESS                 (0x1C)    // if A is GND, its 0x1C
 /*=========================================================================*/
 
 #define MMA8451_REG_OUT_X_MSB     0x01
@@ -77,7 +80,7 @@ class Adafruit_MMA8451 {
 
   bool begin(uint8_t addr = MMA8451_DEFAULT_ADDRESS);
 
-  void read();
+  void sensor_read();
 
   void setRange(mma8451_range_t range);
   mma8451_range_t getRange(void);
@@ -104,4 +107,9 @@ class Adafruit_MMA8451 {
   bool sensorReady;
 
   bool initI2CBus();
+
+  uint8_t i2cread();
+  void i2cwrite(uint8_t x);
 };
+
+#endif

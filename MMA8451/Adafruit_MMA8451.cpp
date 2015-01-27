@@ -26,10 +26,23 @@
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include "Adafruit_MMA8451.h"
 
 #define I2C_BUS_NAME "/dev/i2c-1"
 
 using namespace std;
+
+uint8_t Adafruit_MMA8451::i2cread(void) {
+  uint8_t rtn = 0x00;
+  if (read(i2cDescriptor, &rtn, 1) == -1) {
+    cout << "read from sensor failed" << endl;
+  }
+  return rtn;
+}
+
+void Adafruit_MMA8451::i2cwrite(uint8_t x) {
+  write(i2cDescriptor, &x, 1);
+}
 
 bool Adafruit_MMA8451::initI2CBus() {
   i2cDescriptor = open(I2C_BUS_NAME, O_RDWR);
@@ -38,12 +51,13 @@ bool Adafruit_MMA8451::initI2CBus() {
     cout << " error, error message: " << strerror(errno) << endl;
     return false;
   }
-  if (ioctl(i2cDescriptor, I2C_SLAVE, L3G_ADDR) < 0) {
-    cout << "L3G4200D::initI2CBus::Init slave " << L3G_ADDR;
+  if (ioctl(i2cDescriptor, I2C_SLAVE, MMA8451_DEFAULT_ADDRESS) < 0) {
+    cout << "L3G4200D::initI2CBus::Init slave " << MMA8451_DEFAULT_ADDRESS;
     cout << "error, error message: " << strerror(errno) << endl;
     return false;
   }
   busReady = true;
+  cout << "init I2C bus done" << endl;
   usleep(100000);
   return true;
 }
@@ -53,15 +67,6 @@ bool Adafruit_MMA8451::initI2CBus() {
     @brief  Abstract away platform differences in Arduino wire library
 */
 /**************************************************************************/
-static inline uint8_t i2cread(void) {
-  uint8_t rtn = 0x00;
-  read(i2cDescriptor, &rtn, 1);
-  return rtn
-}
-
-static inline void i2cwrite(uint8_t x) {
-  write(i2cDescriptor, &x, 1)
-}
 
 
 /**************************************************************************/
@@ -149,7 +154,7 @@ bool Adafruit_MMA8451::begin(uint8_t i2caddr) {
 }
 
 
-void Adafruit_MMA8451::read(void) {
+void Adafruit_MMA8451::sensor_read(void) {
   // read x y z at once
   // Wire.beginTransmission(_i2caddr);
   i2cwrite(MMA8451_REG_OUT_X_MSB);
@@ -266,7 +271,7 @@ void Adafruit_MMA8451::getEvent(sensors_event_t *event) {
   event->type      = SENSOR_TYPE_ACCELEROMETER;
   event->timestamp = 0;
 
-  read();
+  sensor_read();
 
   event->acceleration.x = x_g;
   event->acceleration.y = y_g;
