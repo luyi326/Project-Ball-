@@ -14,12 +14,16 @@ public:
 	ADXL345();
 	~ADXL345();
 	void init();
-	double readAxis(ADX_Axis axis);
+	int readAxis(ADX_Axis axis);
+	double readAngle(ADX_Axis axis);
 
 private:
 	int i2cDescriptor;
 	bool busReady;
 	bool sensorReady;
+	int readAccX(); 
+	int readAccY(); 
+	int readAccZ(); 
 
 	bool initI2CBus();
 	inline bool writeByte(uint8_t byte);

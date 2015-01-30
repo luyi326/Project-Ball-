@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <math.h>
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -22,7 +23,69 @@ using namespace std;
 #define ADX_ADDR (0xA7 >> 1) //Essentially 0x53
 #define I2C_BUS_NAME "/dev/i2c-1"
 
+double zeroValue[5] = { -200, 44, 660, 52.3, -18.5}; // Found by experimenting
+
+//*********************util functions
+int ADXL345::readAccX() {
+    int readResults;
+    uint8_t results[2];
+    results[0] = 0;
+    results[1] = 0;
+    writeByte(Register_X0);
+    readResults=read(i2cDescriptor, results, 2);
+     if (readResult < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+        cout << ", error message: " << strerror(errno) << endl;
+        return ((double)result) / 256.0;
+    }
+    result = results[0];
+    result <<= 8;
+    result += results[1];
+    return result;
+}
+
+int ADXL345::readAccY() {
+    int readResults;
+    uint8_t results[2];
+    results[0] = 0;
+    results[1] = 0;
+    writeByte(Register_Y0);
+    readResults=read(i2cDescriptor, results, 2);
+     if (readResult < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+        cout << ", error message: " << strerror(errno) << endl;
+        return ((double)result) / 256.0;
+    }
+    result = results[0];
+    result <<= 8;
+    result += results[1];
+    return result;
+}
+
+
+int ADXL345::readAccZ() {
+    int readResults;
+    uint8_t results[2];
+    results[0] = 0;
+    results[1] = 0;
+    writeByte(Register_Z0);
+    readResults=read(i2cDescriptor, results, 2);
+     if (readResult < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+        cout << ", error message: " << strerror(errno) << endl;
+        return ((double)result) / 256.0;
+    }
+    result = results[0];
+    result <<= 8;
+    result += results[1];
+    return result;
+}
+
+
+
+
 ADXL345::ADXL345() : busReady(false), sensorReady(false) {
+    
     initI2CBus();
 }
 
@@ -40,8 +103,8 @@ void ADXL345::init() {
     }
 
     bool writeResult = true;
-    writeResult &= writeByte(Register_2D);
-    writeResult &= writeByte(0x08);
+    writeResult &= write2Byte(0x31, 0x09); // Full resolution mode
+    writeResult &= write2Byte(Register_2D,0x08); // Setup ADXL345 for constant measurement mode
     sensorReady = writeResult;
 }
 
@@ -57,37 +120,48 @@ void ADXL345::init() {
  * @return normalized result of acceleration on that axis, double
  */
 double ADXL345::readAxis(ADX_Axis axis) {
-	uint16_t result = 0;
-    bool writeResult = true;
-	switch (axis) {
-		case ADX_X:
-			writeResult &= write2Byte(Register_X0, Register_X1);
-			break;
-		case ADX_Y:
-			writeResult &= write2Byte(Register_Y0, Register_Y1);
-			break;
-		case ADX_Z:
-			writeResult &= write2Byte(Register_Z0, Register_Z1);
-			break;
-		default:
-			cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
-			writeResult = false;
-			break;
-	}
-	uint8_t results[2];
-	results[0] = 0;
-	results[1] = 0;
-    int readResult = read(i2cDescriptor, results, 2);
-    if (readResult < 2) {
-        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
-        cout << ", error message: " << strerror(errno) << endl;
-        return ((double)result) / 256.0;
+    switch (axis) {
+        case ADX_X:
+            return ((double)readAccX()/256.0);
+            break;
+        case ADX_Y:
+            return ((double)readAccY()/256.0);
+            break;
+        case ADX_Z:
+            return ((double)readAccZ()/256.0);
+            break;
+        default:
+            cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
+            writeResult = false;
+            break;
     }
-    result = results[0];
-    result <<= 8;
-    result += results[1];
-    return ((double)result) / 256.0;
+
+    return 0;
 }
+
+double ADXL345::readAngle(ADX_Axis axis) {
+    double accXval = (double)readAccX() - zeroValue[0];
+    double accYval = (double)readAccY() - zeroValue[1];
+    double accZval = (double)readAccZ() - zeroValue[2];
+    switch (axis) {
+        case ADX_X:
+            return (atan2(accXval, accZval) + PI) * RAD_TO_DEG;
+            break;
+        case ADX_Y:
+            return (atan2(accYval, accZval) + PI) * RAD_TO_DEG;
+            break;
+        case ADX_Z:
+            return (atan2(accXval, accYval) + PI) * RAD_TO_DEG;
+            break;
+        default:
+            cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
+            writeResult = false;
+            break;
+    }
+
+   return 0;
+}
+
 
 /**
  * @brief Initialize I2C bus
