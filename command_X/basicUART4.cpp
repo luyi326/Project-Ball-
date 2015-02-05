@@ -1,11 +1,18 @@
 #include <stdio.h>
-#include <stdlin.h>
+#include <stdlib.h>
 #include "../BlackLib/BlackUART.h"
+// #include "../BlackLib/BlackCore.h"
+#include <stdint.h>
+#include <iostream>
+
+
+using namespace BlackLib;
+
 
 int main(){
-      BlackLib::BlackUART  myUart(BlackLib::UART4,
+      BlackLib::BlackUART  myUart(BlackLib::UART1,
                              BlackLib::Baud19200,
-                             BlackLib::ParityENo,
+                             BlackLib::ParityNo,
                              BlackLib::StopOne,
                              BlackLib::Char8 );
 
