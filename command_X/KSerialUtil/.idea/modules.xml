@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/KSerialUtil.iml" filepath="$PROJECT_DIR$/.idea/KSerialUtil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../../Project-Ball-/command_X/.idea/command_X.iml" filepath="$PROJECT_DIR$/../../../Project-Ball-/command_X/.idea/command_X.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../../.idea/koala-desktop-interface.iml" filepath="$PROJECT_DIR$/../../.idea/koala-desktop-interface.iml" />
+    </modules>
+  </component>
+</project>
