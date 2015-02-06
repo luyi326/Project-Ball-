@@ -4,7 +4,7 @@ __author__ = 'khjtony_M4800'
     Please press "start" to calibrate
     the frame is:
 
-    [button] [sign] [value] \n
+    [0x7E] [button] [sign] [value]
 
     #0xff is start delim
     [button] refers to which button/axis is triggered
@@ -29,13 +29,20 @@ pygame.init()
 # XBee = XBeeConnector.XBeeConnector()
 # XBee.init()
 XBee_port = raw_input("Input Xbee port: ")
-def XBee_write(msg):
+
+def XBee_begin():
     ser = serial.Serial(XBee_port.upper(), 19200, timeout=1)
     ser.bytesize = serial.EIGHTBITS
     ser.parity = serial.PARITY_NONE
     ser.stopbits = serial.STOPBITS_ONE
-    ser.write(msg)
-    ser.close()
+    return ser
+
+def XBee_write(xbee,msg):
+    # print "5 bytes written"
+    xbee.write(msg)
+
+def XBee_end(xbee):
+    xbee.close()
 
 # Define calibration (only for Joy 1 and Joy 2) for 360 controller
 axis_cali = np.zeros(5)
@@ -111,7 +118,7 @@ while not done:
     # textPrint.indent()
     for i in range(axes):
         axis = joystick.get_axis(i)
-        commandArr.append([chr(i), chr(1 if axis >0 else 0), chr(int(math.fabs(axis-axis_cali[i])*0xfe))])
+        commandArr.append([chr(i), chr(1 if axis >0 else 0), chr(int(math.fabs(axis)*0x7f+0x7f))])
         # print "Axis {} value: {:>6.3f}".format(i, axis)
     # textPrint.unindent()
 
@@ -149,15 +156,19 @@ while not done:
 
 
     #send data
+    xbee = XBee_begin()
     for item in commandArr:
-        # item.insert(0xff,0)
+        item.insert(0, chr(0x7e))
         item.append('\n')
-        # XBee_write(''.join(item))
-        # print ''.join(str(a) for a in item)
-        print item
+        data = ''.join(item)
+        # print ":".join("{:02x}".format(ord(c)) for c in data)
+        XBee_write(xbee,data)
+        # print ''.join(item)
+        # print item
+    XBee_end(xbee)
 
-    commandArr = list()
-    time.sleep(1)
+    commandArr = []
+    time.sleep(0.1)
 
 
 # ALL CODE TO DRAW SHOULD GO ABOVE THIS COMMENT
