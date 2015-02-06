@@ -14,7 +14,7 @@ OBJDIR = ../BlackLib/
 
 all: $(TARGET)
 
-$(TARGET): basicUART4.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o $(OBJDIR)BlackLib.h
+$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o $(OBJDIR)BlackLib.h
 	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) basicUART4.cpp $(OBJDIR)BlackCore.o $(OBJDIR)BlackUART.o
 
 
