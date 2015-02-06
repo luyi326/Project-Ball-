@@ -23,21 +23,18 @@ DualStepperMotor::~DualStepperMotor() {
 
 
 void DualStepperMotor::moveForward(uint64_t speed) {
-	leftStepper.run(1, speed);
-	rightStepper.run(0, speed);
+	leftStepper.run(1, speed + 2 * bias);
+	rightStepper.run(0, speed - 2 * bias);
 }
 
 void DualStepperMotor::moveBackward(uint64_t speed) {
-	leftStepper.run(0, speed);
-	rightStepper.run(1, speed);
+	leftStepper.run(0, speed - 2 * bias);
+	rightStepper.run(1, speed + 2 * bias);
 }
 
-void DualStepperMotor::turnLeft() {
-
-}
-
-void DualStepperMotor::turnRight() {
-
+void DualStepperMotor::setBias(int8_t bias) {
+	turnBias = bias;
+	this->run();
 }
 
 void DualStepperMotor::run() {

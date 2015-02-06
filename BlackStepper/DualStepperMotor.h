@@ -1,6 +1,7 @@
 #ifndef DUAL_STEPPER_MOTOR_H
 #define DUAL_STEPPER_MOTOR_H
 
+#include <stdint.h>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackLib/BlackGPIO.h"
@@ -11,6 +12,7 @@ class DualStepperMotor {
 private:
 	BlackStepper leftStepper;
 	BlackStepper rightStepper;
+	uint8_t turnBias;
 
 public:
 	DualStepperMotor(
@@ -23,8 +25,7 @@ public:
 	void moveForward(uint64_t speed);
 	void moveBackward(uint64_t speed);
 	void run();
-	void turnLeft();
-	void turnRight();
+	void setBias(int8_t bias);
 	void stop();
 
 	bool targetSpeedReached();
