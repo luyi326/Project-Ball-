@@ -22,10 +22,17 @@ int main(){
       char writeBuffer[]  = "this is test.\n";
       myUart.write(writeBuffer, sizeof(writeBuffer));
 
+
+      while(1){
+
       sleep(1);
 
       std::string readFromUart = myUart.read();
 
-      std::cout << "Test output on loopback: " << readFromUart;
+      if (readFromUart.length()>0){
+
+      std::cout << readFromUart;
+}
+}
 
 }
