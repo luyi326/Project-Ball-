@@ -1,11 +1,18 @@
 #include <stdio.h>
-#include <stdlin.h>
+#include <stdlib.h>
 #include "../BlackLib/BlackUART.h"
+// #include "../BlackLib/BlackCore.h"
+#include <stdint.h>
+#include <iostream>
+
+
+using namespace BlackLib;
+
 
 int main(){
-      BlackLib::BlackUART  myUart(BlackLib::UART4,
+      BlackLib::BlackUART  myUart(BlackLib::UART1,
                              BlackLib::Baud19200,
-                             BlackLib::ParityENo,
+                             BlackLib::ParityNo,
                              BlackLib::StopOne,
                              BlackLib::Char8 );
 
@@ -15,10 +22,17 @@ int main(){
       char writeBuffer[]  = "this is test.\n";
       myUart.write(writeBuffer, sizeof(writeBuffer));
 
+
+      while(1){
+
       sleep(1);
 
       std::string readFromUart = myUart.read();
 
-      std::cout << "Test output on loopback: " << readFromUart;
+      if (readFromUart.length()>0){
+
+      std::cout << readFromUart;
+}
+}
 
 }
