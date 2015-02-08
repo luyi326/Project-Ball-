@@ -22,6 +22,7 @@ private:
 	bool _target_direction;
 	uint64_t _target_speed;
 	uint64_t _target_freq;
+	uint16_t _current_accelration_step;
 
 	bool _speedReached;
 
@@ -36,9 +37,11 @@ public:
 	void run(bool direction, uint64_t speed);
 	void run();
 	void stop();
+	void setAcceleration(uint16_t acceration_step);
 
 	bool getDirection();
 	uint64_t getSpeed();
+	uint16_t getAcceleration();
 	bool targetSpeedReached();
 
 };

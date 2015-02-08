@@ -9,7 +9,8 @@ using namespace std;
 // #define STEPPER_DEBUG
 
 #define STEP_INTERVAL 5000
-#define STEP_SIZE_FREQ 15
+// #define STEP_SIZE_FREQ 15
+#define DEFAULT_ACCEL_STEP 15
 
 #define PERIOD_MAX 10000
 #define PERIOD_MIN 170
@@ -25,6 +26,7 @@ BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(d
 	_target_direction = _current_direction = 0;
 	_target_speed = _current_speed = PERIOD_MAX;
 	_target_freq = _current_freq = PERIOD_MICRO_TO_FREQ(_target_speed);
+	_current_accelration_step = DEFAULT_ACCEL_STEP;
 	setGPIOAndPWM(0, 0);
 }
 
@@ -45,6 +47,11 @@ void BlackStepper::stop() {
 	setMovement(0, 0);
 }
 
+void BlackStepper::setAcceleration(uint64_t acceration_step) {
+	_current_accelration_step = acceration_step;
+}
+
+
 //Getters
 bool BlackStepper::getDirection() {
 	return _current_direction;
@@ -56,6 +63,9 @@ uint64_t BlackStepper::getSpeed() {
 
 bool BlackStepper::targetSpeedReached() {
 	return _speedReached;
+}
+uint16_t BlackStepper::getAcceleration() {
+	return _current_accelration_step;
 }
 
 //Private functions
@@ -85,9 +95,9 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 #endif
 		int _cal_new_freq = (int)_current_freq;
 
-		uint64_t real_step = STEP_SIZE_FREQ;
+		uint64_t real_step = _current_accelration_step;
 		if (_current_direction == _target_direction) {
-			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), (uint64_t)STEP_SIZE_FREQ);
+			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), real_step);
 #ifdef STEPPER_DEBUG
 			cout << "real step size set to " << real_step << endl;
 #endif
