@@ -18,6 +18,7 @@ class XBeeConnector:
         self.device_name = None
         self.serial_connection = None
         self.data_polling_thread = None
+        self.device = None
 
     def init(self):
         """Lists serial ports
@@ -59,6 +60,8 @@ class XBeeConnector:
 
     def on_data_arrive(self, callback):
         self.data_arrive_callback = callback
+
+
 
     def __initial_response_received(self, data, device, serial_connection):
         if data:
@@ -111,3 +114,4 @@ class XBeeConnector:
         ser.write("+++")
         line = ser.readline()
         callback(line, device, ser)
+
