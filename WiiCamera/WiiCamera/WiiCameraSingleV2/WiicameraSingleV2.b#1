@@ -567,7 +567,7 @@ design rules under a new name.</description>
 <wire x1="13.843" y1="7.2" x2="13.843" y2="7.874" width="0.6096" layer="16"/>
 <wire x1="13.843" y1="7.874" x2="13.589" y2="8.255" width="0.6096" layer="16"/>
 <wire x1="13.589" y1="8.255" x2="12.446" y2="8.255" width="0.6096" layer="16"/>
-<via x="12.446" y="8.255" extent="1-16" drill="0.5" shape="square"/>
+<via x="12.446" y="8.255" extent="1-16" drill="0.381" shape="square"/>
 <wire x1="12.446" y1="8.255" x2="8.87" y2="8.255" width="0.6096" layer="1"/>
 <polygon width="0.6096" layer="1">
 <vertex x="0" y="19.05"/>
