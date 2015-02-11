@@ -36,7 +36,7 @@ public:
 
   	bool isBusReady();
   	bool isSensorReady();
-	void init();   // returns true if the connection to the sensor established correctly
+	bool init();   // returns true if the connection to the sensor established correctly
 	uint8_t readBlob();   // updated the blobs, and returns the number of blobs detected
 	void reset();
 
