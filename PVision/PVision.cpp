@@ -84,10 +84,10 @@ PVision::~PVision() {
 * Public methods
 ******************************************************************************/
 // init the PVision sensor
-void PVision::init () {
+bool PVision::init () {
     if (!busReady) {
         cout << "PVision::init:: Bus not ready, doing nothing" << endl;
-        return;
+        return false;
     }
     // IRsensorAddress = SENSOR_ADDRESS;
     // IRslaveAddress = IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
@@ -103,6 +103,7 @@ void PVision::init () {
     writeResult &= Write_2bytes(0x33,0x33); usleep(10000);
     sensorReady = writeResult;
     usleep(100000);
+    return true;
 }
 
 bool PVision::isBusReady() {
