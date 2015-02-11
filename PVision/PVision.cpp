@@ -155,11 +155,11 @@ uint8_t PVision::readBlob() {
         cout << ", error message: " << strerror(errno) << endl;
         return 0x00;
     }
-    cout << "Got " << readResult << " byte" << endl;
-    for (i = 0; i < 16; i++) {
-        cout << "|0x" << std::hex << (int)data_buf[i];
-    }
-    cout << "|" << endl;
+    // cout << "Got " << readResult << " byte" << endl;
+    // for (i = 0; i < 16; i++) {
+    //     cout << "|0x" << std::hex << (int)data_buf[i];
+    // }
+    // cout << "|" << endl;
 
     blobcount = 0;
 

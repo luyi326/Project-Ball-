@@ -9,5 +9,5 @@ PCA9548A::PCA9548A(): I2CBase(I2C_BUS_NAME, MUX_ADDRESS) {
 }
 
 void PCA9548A::selectChannel(uint8_t channel) {
-	this->write(channel);
+	this->writeByte(channel);
 }
