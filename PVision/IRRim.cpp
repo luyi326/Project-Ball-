@@ -1,36 +1,37 @@
 #include "IRRim.h"
+#include <stdlib.h>
+
+#define PV_N(n) (1 << (n+2))
 
 //Constructor and destructor
-IRRim::IRRim(gpioName mux[NUM_SEL], string calibrationFiles[NUM_IR]) {
-	//Initialize mux and point to IR No.0
-	for (int i = 0; i < NUM_SEL; i++) {
-		_muxs.push_back(BlackGPIO(mux[i], output, SecureMode));
-		_muxs[i].setValue(low);
+IRRim::IRRim(uint8_t num_of_sensors) {
+	if (num_of_sensors > 6) {
+		cerr << "Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
+		exit(1);
 	}
+
+
 	//Initialize all IRs and check status
-	for (int i = 0; i < NUM_IR; i++) {
-		_sensors.push_back(PVision());
-		_sensors[i].init();
-		if (!_sensors[i].isSensorReady()) {
-			cout << "IR No. " << i << " is not ready, may need to do a reset" << endl;
+	sensors = new PVision[num_of_sensors];
+	sensor_count = num_of_sensors;
+	for (int i = 0; i < sensor_count; i++) {
+		mux.selectChannel(PV_N(i + 1));
+		if (!sensors[i].init()) {
+			cerr << "Sensor No. " << i + 1 << " not initialized correctly" << endl;
 		}
-		nextSensor();
 	}
+
 }
 
 IRRim::~IRRim() {
-	_muxs.clear();
-	_sensors.clear();
+	mux.reset();
+	delete sensors;
 }
 
 /**
  * [IRRim::reset description]
  */
 void IRRim::reset() {
-	for (vector<PVision>::iterator it = _sensors.begin(); it != _sensors.end(); ++it) {
-		(*it).reset();
-		nextSensor();
-	}
 }
 
 void IRRim::poll() {
@@ -38,27 +39,7 @@ void IRRim::poll() {
 }
 
 void IRRim::nextSensor() {
-	uint8_t current = 0;
-	for (vector<BlackGPIO>::iterator it = _muxs.begin(); it != _muxs.end(); ++it) {
-		current |= (*it).getNumericValue();
-		current <<= 1;
-	}
-	current++;
-
-	//Next sensor to the last sensor is sensor No.0
-	if (current > NUM_IR - 1) {
-		current = 0;
-	}
-	select(current);
 }
 
 void IRRim::select(uint8_t num) {
-	if (num < 0) num = 0;
-	if (num > NUM_IR) num = NUM_IR - 1;
-
-	uint8_t mask = 0x01;
-	for (vector<BlackGPIO>::reverse_iterator it = _muxs.rbegin(); it != _muxs.rend(); ++it) {
-		(*it).setValue((digitalValue)(num & mask));
-		num >>= 1;
-	}
 }

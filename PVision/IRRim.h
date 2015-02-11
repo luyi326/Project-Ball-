@@ -4,11 +4,10 @@
 #include <iostream>
 #include <vector>
 #include "PVision.h"
+#include "PCA9548A.h"
 #include "../BlackLib/BlackCore.h"
 #include "../BlackLib/BlackGPIO.h"
 
-#define NUM_IR 8
-#define NUM_SEL 3
 
 using namespace std;
 using namespace BlackLib;
@@ -19,7 +18,7 @@ public:
 	 *	Constructor of IRRim
 	 *	mux is an array of mux GPIO bits from MSB to LSB
 	 */
-	IRRim(gpioName mux[NUM_SEL], string calibrationFiles[NUM_IR]);
+	IRRim(uint8_t num_of_sensors);
 
 	/**
 	 *
@@ -36,8 +35,9 @@ public:
 	 */
 	void poll();
 private:
-	vector<BlackGPIO> _muxs;
-	vector<PVision> _sensors;
+	PCA9548A mux;
+	PVision* sensors;
+	uint8_t sensor_count;
 
 	void nextSensor();
 	void select(uint8_t num);
