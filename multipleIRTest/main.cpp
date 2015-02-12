@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unistd.h>
+#include <ctime>
 #include "../PVision/PCA9548A.h"
 #include "../PVision/PVision.h"
 
@@ -15,6 +16,9 @@ int main (int argc, char* argv[]) {
 
 	while (1) {
 		// cout << "Try read blob" << endl;
+		timespec start;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+
 		mux.selectChannel(0x04);
 		uint8_t result = v1.readBlob();
 		// cout << "Raw result = " << result << endl;
@@ -49,7 +53,18 @@ int main (int argc, char* argv[]) {
 		// 	cout << "BLOB4 detected. X:" << v1.Blob4.X << " Y:" << v1.Blob4.Y;
 		// 	cout << " Size: " << v1.Blob4.Size << endl;
 		// }
-
+		timespec stop;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
+		// cout << start << "  " << stop << endl;
+		timespec temp;
+		if ((stop.tv_nsec-start.tv_nsec)<0) {
+			temp.tv_sec = stop.tv_sec-start.tv_sec-1;
+			temp.tv_nsec = 1000000000+stop.tv_nsec-start.tv_nsec;
+		} else {
+			temp.tv_sec = stop.tv_sec-start.tv_sec;
+			temp.tv_nsec = stop.tv_nsec-start.tv_nsec;
+		}
+		cout << temp.tv_sec << "." << temp.tv_nsec << endl;
 		usleep(5000);
 
 	}

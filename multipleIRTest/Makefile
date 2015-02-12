@@ -4,7 +4,7 @@ CC = g++
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -g -Wall -std=gnu++0x
+CFLAGS  = -g -Wall -std=gnu++0x -lrt
 # LFLAGS = -L /usr/local/lib/libblackLib.a
 
 # the build target executable:
