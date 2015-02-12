@@ -32,6 +32,7 @@ IRRim::~IRRim() {
  * [IRRim::reset description]
  */
 void IRRim::reset() {
+	mux.reset();
 }
 
 void IRRim::poll() {
