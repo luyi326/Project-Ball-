@@ -27,6 +27,7 @@ BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(d
 	_target_speed = _current_speed = PERIOD_MAX;
 	_target_freq = _current_freq = PERIOD_MICRO_TO_FREQ(_target_speed);
 	_current_accelration_step = DEFAULT_ACCEL_STEP;
+	_turn_freq_bias = 0;
 	setGPIOAndPWM(0, 0);
 }
 
@@ -51,6 +52,9 @@ void BlackStepper::setAcceleration(uint64_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
+void BlackStepper::setBias(int16_t bias) {
+	_turn_freq_bias = bias;
+}
 
 //Getters
 bool BlackStepper::getDirection() {
@@ -68,13 +72,17 @@ uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
+int16_t getBias() {
+	return _turn_freq_bias;
+}
+
 //Private functions
 void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	_target_direction = direction;
 	_target_speed = speed;
 	if (speed > PERIOD_MAX) speed = PERIOD_MAX;
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
-	_target_freq = PERIOD_MICRO_TO_FREQ(speed);
+	_target_freq = (uint64_t)((int64_t)PERIOD_MICRO_TO_FREQ(speed) + _turn_freq_bias);
 
 	_speedReached = 0;
 
