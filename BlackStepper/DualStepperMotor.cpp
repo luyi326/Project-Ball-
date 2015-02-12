@@ -32,12 +32,10 @@ void DualStepperMotor::moveBackward(uint64_t speed) {
 	rightStepper.run(1, speed);
 }
 
-void DualStepperMotor::turnLeft() {
-
-}
-
-void DualStepperMotor::turnRight() {
-
+void DualStepperMotor::setBias(int16_t bias) {
+	turn_bias = bias;
+	leftStepper.setBias(bias);
+	rightStepper.setBias(-bias);
 }
 
 void DualStepperMotor::run() {
@@ -54,19 +52,19 @@ bool DualStepperMotor::targetSpeedReached() {
 	bool leftReached = leftStepper.targetSpeedReached();
 	bool rightReached = rightStepper.targetSpeedReached();
 
-	static clock_t left = -1, right = -1;
+	// static clock_t left = -1, right = -1;
 
-	if (leftReached && (left == -1)) {
-		left = clock();
-	}
-	if (rightReached && (right == -1)) {
-		right = clock();
-	}
+	// if (leftReached && (left == -1)) {
+	// 	left = clock();
+	// }
+	// if (rightReached && (right == -1)) {
+	// 	right = clock();
+	// }
 
-	if (left != -1 && right != -1) {
-		cout << "Left finish clicks: " << left << ", times: " << ((float)left)/CLOCKS_PER_SEC << " seconds" << endl;
-		cout << "Right finish clicks: " << right << ", times: " << ((float)right)/CLOCKS_PER_SEC << " seconds" << endl;
-	}
+	// if (left != -1 && right != -1) {
+	// 	cout << "Left finish clicks: " << left << ", times: " << ((float)left)/CLOCKS_PER_SEC << " seconds" << endl;
+	// 	cout << "Right finish clicks: " << right << ", times: " << ((float)right)/CLOCKS_PER_SEC << " seconds" << endl;
+	// }
 
 	// return (leftStepper.targetSpeedReached() && rightStepper.targetSpeedReached());
 	return leftReached && rightReached;
