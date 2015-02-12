@@ -11,12 +11,14 @@
 using namespace BlackLib;
 
 class BlackServo{
+
 public:
 	BlackServo(pwmName driver);
 	~BlackServo();
 	void goto(int);
 	void goto(float);
 	void DEBUG_MODE(bool);
+
 private:
 	BlackPWM _dutycycle;
 	void _goto(int);
