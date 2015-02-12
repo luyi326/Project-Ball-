@@ -11,10 +11,7 @@ DualStepperMotor::DualStepperMotor(
 		pwmName frequencyRight
 	) :
 	leftStepper(directionLeft, frequencyLeft),
-	rightStepper(directionRight, frequencyRight),
-	currentDirection(1),
-	currentSpeed(10000)
-	 {
+	rightStepper(directionRight, frequencyRight) {
 
 }
 
@@ -26,28 +23,21 @@ DualStepperMotor::~DualStepperMotor() {
 
 
 void DualStepperMotor::moveForward(uint64_t speed) {
-	currentDirection = 1;
-	currentSpeed = speed;
-	leftStepper.run(1, speed + turnBias);
-	rightStepper.run(0, speed - turnBias);
-	//cout << "Left target: " << speed + turnBias << " right target: " << speed - turnBias << endl;
+	leftStepper.run(1, speed);
+	rightStepper.run(0, speed);
 }
 
 void DualStepperMotor::moveBackward(uint64_t speed) {
-	currentDirection = 0;
-	currentSpeed = speed;
-	leftStepper.run(0, speed - turnBias);
-	rightStepper.run(1, speed + turnBias);
+	leftStepper.run(0, speed);
+	rightStepper.run(1, speed);
 }
 
-void DualStepperMotor::setBias(int16_t bias) {
-	turnBias = bias;
-	// cout << "turn bias = " << turnBias << endl;
-	// if (currentDirection) {
-	// 	this->moveForward(currentSpeed);
-	// } else {
-	// 	this->moveBackward(currentSpeed);
-	// }
+void DualStepperMotor::turnLeft() {
+
+}
+
+void DualStepperMotor::turnRight() {
+
 }
 
 void DualStepperMotor::run() {
@@ -56,8 +46,6 @@ void DualStepperMotor::run() {
 }
 
 void DualStepperMotor::stop() {
-	currentDirection = 1;
-	currentSpeed = 10000;
 	leftStepper.run(1, 0);
 	rightStepper.run(0, 0);
 }
@@ -65,20 +53,20 @@ void DualStepperMotor::stop() {
 bool DualStepperMotor::targetSpeedReached() {
 	bool leftReached = leftStepper.targetSpeedReached();
 	bool rightReached = rightStepper.targetSpeedReached();
-	//if (leftReached && rightReached) cout << "Left speed: " << leftStepper.getSpeed() << " Right speed: " << rightStepper.getSpeed() << endl;
-	// static clock_t left = -1, right = -1;
 
-	// if (leftReached && (left == -1)) {
-	// 	left = clock();
-	// }
-	// if (rightReached && (right == -1)) {
-	// 	right = clock();
-	// }
+	static clock_t left = -1, right = -1;
 
-	// if (left != -1 && right != -1) {
-	// 	cout << "Left finish clicks: " << left << ", times: " << ((float)left)/CLOCKS_PER_SEC << " seconds" << endl;
-	// 	cout << "Right finish clicks: " << right << ", times: " << ((float)right)/CLOCKS_PER_SEC << " seconds" << endl;
-	// }
+	if (leftReached && (left == -1)) {
+		left = clock();
+	}
+	if (rightReached && (right == -1)) {
+		right = clock();
+	}
+
+	if (left != -1 && right != -1) {
+		cout << "Left finish clicks: " << left << ", times: " << ((float)left)/CLOCKS_PER_SEC << " seconds" << endl;
+		cout << "Right finish clicks: " << right << ", times: " << ((float)right)/CLOCKS_PER_SEC << " seconds" << endl;
+	}
 
 	// return (leftStepper.targetSpeedReached() && rightStepper.targetSpeedReached());
 	return leftReached && rightReached;

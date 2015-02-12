@@ -42,17 +42,7 @@ int main (int argc, char* argv[]) {
     }
     sleep(4);
 
-    motorPair->setBias(128);
-    motorPair->moveForward(speed);
-
-    while (!motorPair->targetSpeedReached()) {
-        motorPair->run();
-        usleep(50000);
-    }
-    sleep(4);
-
-    motorPair->setBias(-128);
-    motorPair->moveForward(speed);
+    motorPair->moveBackward(speed);
 
     while (!motorPair->targetSpeedReached()) {
         motorPair->run();
