@@ -6,7 +6,7 @@
 #include "../BlackLib/BlackGPIO.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream.h>
+#include <iostream>
 
 using namespace BlackLib;
 
@@ -15,13 +15,13 @@ class BlackServo{
 public:
 	BlackServo(pwmName driver);
 	~BlackServo();
-	void goto(int);
-	void goto(float);
+	void move_to(int);
+	void move_to(float);
 	void DEBUG_MODE(bool);
 
 private:
 	BlackPWM _dutycycle;
-	void _goto(int);
+	float angle;
 	bool Debug_flag;
 };
 
