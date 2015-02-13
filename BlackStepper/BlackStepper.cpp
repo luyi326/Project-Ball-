@@ -179,7 +179,7 @@ inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 #endif
 		_frequency.setDutyPercent(100.0);
 		_frequency.setPeriodTime(PERIOD_MIN, microsecond);
-		_frequency.setDutyPercent(50.0);
+		_frequency.setDutyPercent(60.0);
 
 	} else {
 #ifdef STEPPER_DEBUG
@@ -188,7 +188,4 @@ inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 		_frequency.setDutyPercent(100.0);
 		_frequency.setPeriodTime(FREQ_TO_PERIOD_MICRO(frequency), microsecond);
 		_frequency.setDutyPercent(50.0);
-	}
-	//Allow setup
-	// usleep(200);
 }
