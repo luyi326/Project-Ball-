@@ -48,7 +48,7 @@ void BlackStepper::stop() {
 	setMovement(0, 0);
 }
 
-void BlackStepper::setAcceleration(uint64_t acceration_step) {
+void BlackStepper::setAcceleration(uint16_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
@@ -72,7 +72,7 @@ uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
-int16_t getBias() {
+int16_t BlackStepper::getBias() {
 	return _turn_freq_bias;
 }
 
