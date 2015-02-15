@@ -44,9 +44,9 @@ int main (int argc, char* argv[]) {
         int16_t move  = abs(127 - state.AXIS_3);
         int16_t calculatedPeroid = 10000 - 77*move;
         if (move < 10) calculatedPeroid = 20000;
-        int16_t bias = (127 - state.AXIS_0);
+        int16_t bias = 127 - (float)state.AXIS_0
+        bias = lround((float)bias * 0.9 / 127);
         if (abs(bias) < 10) bias = 0;
-        bias *= 5;
         // cout << "Moving ";
         // if (direction) cout << "forward ";
         // else cout << "backward ";
@@ -54,7 +54,7 @@ int main (int argc, char* argv[]) {
 
         // cout << "bias " << bias << endl;
         motorPair->setBias(-bias);
-        if (direction) motorPair->moveForward(calculatedPeroid - 200);
+        if (direction) motorPair->moveForward(calculatedPeroid);
         else motorPair->moveBackward(calculatedPeroid);
         usleep(500);
     }
