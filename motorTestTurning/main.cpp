@@ -37,6 +37,7 @@ int main (int argc, char* argv[]) {
     if (argc >= 3) {
         bias = atof(argv[2]);
     }
+    motorPair->setAcceleration(100);
     cout << "running at speed " << speed <<endl;
     motorPair->moveForward(speed);
     motorPair->setBias(bias);

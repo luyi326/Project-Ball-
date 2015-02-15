@@ -15,7 +15,7 @@ using namespace std;
 #define PERIOD_MAX 10000
 #define PERIOD_MIN 170
 
-#define BIAS_MAX 0.3
+#define BIAS_MAX 0.9
 
 #define PERIOD_MICRO_TO_FREQ(period) ((uint64_t)(1000000/period))
 #define FREQ_TO_PERIOD_MICRO(freq) ((uint64_t)(1000000/freq))
@@ -92,15 +92,6 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 
 	_speedReached = 0;
 
-	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
-	if (direction == _current_direction && speed == _current_speed) {
-#ifdef STEPPER_DEBUG
-		cout << "Target speed " << _target_speed << " and target direction " << _target_direction << " are reached, not doing anything" << endl;
-#endif
-		_speedReached = 1;
-		return;
-	}
-
 
 	if (micros() - _last_timestamp > STEP_INTERVAL) {
 #ifdef STEPPER_DEBUG
@@ -112,6 +103,17 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 		uint64_t real_step = _current_accelration_step;
 		if (_current_direction == _target_direction) {
 			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), real_step);
+
+
+	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
+	if (real_step == 0) {
+#ifdef STEPPER_DEBUG
+		cout << "Target speed " << _target_speed << " and target direction " << _target_direction << " are reached, not doing anything" << endl;
+#endif
+		_speedReached = 1;
+		return;
+	}
+
 #ifdef STEPPER_DEBUG
 			cout << "real step size set to " << real_step << endl;
 #endif
