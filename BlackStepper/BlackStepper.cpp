@@ -15,6 +15,8 @@ using namespace std;
 #define PERIOD_MAX 10000
 #define PERIOD_MIN 170
 
+#define BIAS_MAX 0.9
+
 #define PERIOD_MICRO_TO_FREQ(period) ((uint64_t)(1000000/period))
 #define FREQ_TO_PERIOD_MICRO(freq) ((uint64_t)(1000000/freq))
 
@@ -52,7 +54,11 @@ void BlackStepper::setAcceleration(uint16_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
-void BlackStepper::setBias(int16_t bias) {
+void BlackStepper::setBias(float bias) {
+	if (bias > BIAS_MAX || bias < - BIAS_MAX) {
+		cerr << "bias is too large, try setting bias to " << bias << ", the bias will stay at " << _turn_freq_bias << endl;
+		return;
+	}
 	_turn_freq_bias = bias;
 }
 
@@ -72,7 +78,7 @@ uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
-int16_t BlackStepper::getBias() {
+float BlackStepper::getBias() {
 	return _turn_freq_bias;
 }
 
@@ -82,18 +88,9 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	_target_speed = speed;
 	if (speed > PERIOD_MAX) speed = PERIOD_MAX;
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
-	_target_freq = (uint64_t)((int64_t)PERIOD_MICRO_TO_FREQ(speed) + _turn_freq_bias);
+	_target_freq = (uint64_t)lround((double)PERIOD_MICRO_TO_FREQ(speed) * (1 + _turn_freq_bias));
 
 	_speedReached = 0;
-
-	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
-	if (direction == _current_direction && speed == _current_speed) {
-#ifdef STEPPER_DEBUG
-		cout << "Target speed " << _target_speed << " and target direction " << _target_direction << " are reached, not doing anything" << endl;
-#endif
-		_speedReached = 1;
-		return;
-	}
 
 
 	if (micros() - _last_timestamp > STEP_INTERVAL) {
@@ -106,6 +103,17 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 		uint64_t real_step = _current_accelration_step;
 		if (_current_direction == _target_direction) {
 			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), real_step);
+
+
+	// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
+	if (real_step == 0) {
+#ifdef STEPPER_DEBUG
+		cout << "Target speed " << _target_speed << " and target direction " << _target_direction << " are reached, not doing anything" << endl;
+#endif
+		_speedReached = 1;
+		return;
+	}
+
 #ifdef STEPPER_DEBUG
 			cout << "real step size set to " << real_step << endl;
 #endif

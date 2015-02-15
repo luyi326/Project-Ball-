@@ -11,7 +11,7 @@ class DualStepperMotor {
 private:
 	BlackStepper leftStepper;
 	BlackStepper rightStepper;
-	int16_t turn_bias;
+	float turn_bias;
 
 public:
 	DualStepperMotor(
@@ -23,8 +23,9 @@ public:
 
 	void moveForward(uint64_t speed);
 	void moveBackward(uint64_t speed);
+	void setAcceleration(uint16_t acceration_step);
 	void run();
-	void setBias(int16_t bias);
+	void setBias(float bias);
 	void stop();
 
 	bool targetSpeedReached();
