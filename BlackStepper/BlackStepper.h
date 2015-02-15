@@ -24,7 +24,7 @@ private:
 	uint64_t _target_freq;
 	uint16_t _current_accelration_step;
 
-	int16_t _turn_freq_bias;
+	float _turn_freq_bias;
 
 	bool _speedReached;
 
@@ -40,12 +40,12 @@ public:
 	void run();
 	void stop();
 	void setAcceleration(uint16_t acceration_step);
-	void setBias(int16_t bias);
+	void setBias(float bias);
 
 	bool getDirection();
 	uint64_t getSpeed();
 	uint16_t getAcceleration();
-	int16_t getBias();
+	float getBias();
 	bool targetSpeedReached();
 
 };

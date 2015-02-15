@@ -15,6 +15,8 @@ using namespace std;
 #define PERIOD_MAX 10000
 #define PERIOD_MIN 170
 
+#define BIAS_MAX 0.3
+
 #define PERIOD_MICRO_TO_FREQ(period) ((uint64_t)(1000000/period))
 #define FREQ_TO_PERIOD_MICRO(freq) ((uint64_t)(1000000/freq))
 
@@ -52,7 +54,11 @@ void BlackStepper::setAcceleration(uint64_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
-void BlackStepper::setBias(int16_t bias) {
+void BlackStepper::setBias(float bias) {
+	if (bias > BIAS_MAX || bias < - BIAS_MAX) {
+		cerr >> "bias is too large, try setting bias to " << bias << ", the bias will stay at " << _turn_freq_bias << endl;
+		return;
+	}
 	_turn_freq_bias = bias;
 }
 
@@ -72,7 +78,7 @@ uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
-int16_t getBias() {
+float getBias() {
 	return _turn_freq_bias;
 }
 
@@ -82,7 +88,7 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	_target_speed = speed;
 	if (speed > PERIOD_MAX) speed = PERIOD_MAX;
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
-	_target_freq = (uint64_t)((int64_t)PERIOD_MICRO_TO_FREQ(speed) + _turn_freq_bias);
+	_target_freq = (uint64_t)lround((double)PERIOD_MICRO_TO_FREQ(speed) * (1 + _turn_freq_bias));
 
 	_speedReached = 0;
 

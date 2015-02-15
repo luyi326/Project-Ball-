@@ -32,10 +32,10 @@ void DualStepperMotor::moveBackward(uint64_t speed) {
 	rightStepper.run(1, speed);
 }
 
-void DualStepperMotor::setBias(int16_t bias) {
+void DualStepperMotor::setBias(float bias) {
 	turn_bias = bias;
-	leftStepper.setBias(bias);
-	rightStepper.setBias(-bias);
+	leftStepper.setBias(-bias);
+	rightStepper.setBias(bias);
 }
 
 void DualStepperMotor::run() {
