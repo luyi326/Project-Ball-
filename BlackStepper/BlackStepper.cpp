@@ -50,13 +50,13 @@ void BlackStepper::stop() {
 	setMovement(0, 0);
 }
 
-void BlackStepper::setAcceleration(uint64_t acceration_step) {
+void BlackStepper::setAcceleration(uint16_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
 void BlackStepper::setBias(float bias) {
 	if (bias > BIAS_MAX || bias < - BIAS_MAX) {
-		cerr >> "bias is too large, try setting bias to " << bias << ", the bias will stay at " << _turn_freq_bias << endl;
+		cerr << "bias is too large, try setting bias to " << bias << ", the bias will stay at " << _turn_freq_bias << endl;
 		return;
 	}
 	_turn_freq_bias = bias;
@@ -78,7 +78,7 @@ uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
-float getBias() {
+float BlackStepper::getBias() {
 	return _turn_freq_bias;
 }
 
