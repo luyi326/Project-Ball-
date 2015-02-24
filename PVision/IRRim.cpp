@@ -4,16 +4,16 @@
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
-#define IRRIM_SEEK_INTERVAL (10000) //interval is in microseconds
+#define IRRIM_SEEK_INTERVAL (20000) //interval is in microseconds
 
 //Constructor and destructor
-IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, pwmName muxResetPin) :
-	servo(servoPin),
+IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 	mux(muxResetPin),
+	servo(servoPin),
 	state(IRRimState_Seeking),
-	seeking_is_upwared(true),
+	servo_current_position(0),
 	is_seeking(true),
-	servo_current_position(0)
+	seeking_is_upwared(true)
 	{
 	if (num_of_sensors > 6) {
 		cerr << "Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
@@ -75,6 +75,7 @@ void IRRim::seek() {
 			seeking_is_upwared = true;
 		}
 		servo_current_position += seeking_is_upwared ? 2 : -2;
+		cout << "Moving servo to position " << int(servo_current_position) << endl;
 		servo.move_to(servo_current_position);
 
 		read_IR(0);
@@ -107,7 +108,7 @@ void IRRim::nextSensor() {
 void IRRim::select(uint8_t num) {
 }
 
-inline timespec IRRim::time_diff(timespec t1, timespec t2); {
+inline timespec IRRim::time_diff(timespec t1, timespec t2) {
 	timespec temp;
 	if ((t2.tv_nsec - t1.tv_nsec) < 0) {
 		temp.tv_sec = t2.tv_sec - t1.tv_sec - 1;

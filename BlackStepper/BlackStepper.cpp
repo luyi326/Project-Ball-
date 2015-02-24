@@ -196,4 +196,5 @@ inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 		_frequency.setDutyPercent(100.0);
 		_frequency.setPeriodTime(FREQ_TO_PERIOD_MICRO(frequency), microsecond);
 		_frequency.setDutyPercent(50.0);
+	}
 }

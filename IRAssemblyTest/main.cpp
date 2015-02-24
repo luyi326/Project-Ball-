@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctime>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
@@ -32,11 +33,11 @@ int main (int argc, char* argv[]) {
     motorPair = new DualStepperMotor(GPIO_26, EHRPWM2A, GPIO_44, EHRPWM1B);
     cout << "Setup concluded" << endl;
 
-    // uint64_t speed = 170;
+    uint64_t speed = 170;
     // if (argc >= 2) {
     //     speed = atoi(argv[1]);
     // }
-    // float bias = 0.2;
+    float bias = 0.2;
     // if (argc >= 3) {
     //     bias = atof(argv[2]);
     // }
@@ -46,7 +47,7 @@ int main (int argc, char* argv[]) {
     motorPair->moveForward(speed);
     motorPair->setBias(bias);
 
-    rim = new IRRim(2, GPIO_60, GPIO_48);
+    rim = new IRRim(2, EHRPWM2B, GPIO_48);
 
     while (1) {
         timespec t1;
@@ -68,7 +69,7 @@ int main (int argc, char* argv[]) {
             temp.tv_sec = t2.tv_sec-t1.tv_sec;
             temp.tv_nsec = t2.tv_nsec-t1.tv_nsec;
         }
-        cout << temp.tv_sec << "." << temp.tv_nsec << endl;
+        // cout << temp.tv_sec << "." << temp.tv_nsec << endl;
     }
 
     delete motorPair;

@@ -25,7 +25,7 @@ public:
 	 *	Constructor of IRRim
 	 *	mux is an array of mux GPIO bits from MSB to LSB
 	 */
-	IRRim(uint8_t num_of_sensors, pwmName servoPin, pwmName muxResetPin);
+	IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin);
 
 	/**
 	 *

@@ -4,7 +4,7 @@ CC = g++
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -g -Wall -std=gnu++0x
+CFLAGS  = -g -Wall -std=gnu++0x -lrt
 
 # the build target executable:
 TARGET = IRAssembly.out
@@ -30,10 +30,10 @@ $(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I
 	$(CC) $(CFLAGS) -o $(TARGET) main.cpp $(MOTOR_OBJ) $(BLACK_LIB_OBJ) $(I2C_OBJ)
 
 # Stepper. Servos and double steppers
-BlackStepper.o: $(STEPPER_DIR)BlackStepper. $(OBJDIR)BlackPWM.h
+BlackStepper.o: $(STEPPER_DIR)BlackStepper.h $(OBJDIR)BlackPWM.h
 	$(CC) $(CFLAGS) -c $(STEPPER_DIR)BlackStepper.cpp
 
-BlackServo.o: $(SERVO_DIR)BlackServo. $(OBJDIR)BlackPWM.h
+BlackServo.o: $(SERVO_DIR)BlackServo.h $(OBJDIR)BlackPWM.h
 	$(CC) $(CFLAGS) -c $(SERVO_DIR)BlackServo.cpp
 
 DualStepperMotor.o: $(STEPPER_DIR)DualStepperMotor.h $(STEPPER_DIR)BlackStepper.h
