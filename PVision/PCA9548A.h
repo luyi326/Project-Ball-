@@ -13,6 +13,7 @@ using namespace BlackLib;
 class PCA9548A : public I2CBase {
 public:
 	PCA9548A(gpioName reset_pin);
+	~PCA9548A();
 	void selectChannel(uint8_t channel);
 	void reset();
 private:

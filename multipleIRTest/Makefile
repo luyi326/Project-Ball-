@@ -12,11 +12,12 @@ TARGET = multiIRTest.out
 
 PIXDIR = ../PVision/
 I2CDIR = ../I2CBase/
+OBJDIR = ../BlackLib/
 
 all: $(TARGET)
 
-$(TARGET): I2CBase.o PCA9548A.o PVision.o $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp I2CBase.o PCA9548A.o PVision.o
+$(TARGET): I2CBase.o PCA9548A.o PVision.o $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp I2CBase.o PCA9548A.o PVision.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o
 
 I2CBase.o: $(I2CDIR)I2CBase.h
 	$(CC) $(CFLAGS) -c $(I2CDIR)I2CBase.cpp

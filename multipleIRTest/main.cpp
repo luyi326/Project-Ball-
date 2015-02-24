@@ -5,9 +5,10 @@
 #include "../PVision/PVision.h"
 
 using namespace std;
+using namespace BlackLib;
 
 int main (int argc, char* argv[]) {
-	PCA9548A mux;
+	PCA9548A mux(GPIO_48);
 	PVision v1, v2;
 	mux.selectChannel(0x04);
 	v1.init();

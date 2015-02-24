@@ -15,17 +15,15 @@ void delay(float ms){
 int main (int argc, char* argv[]) {
     BlackServo myServo(EHRPWM2B);
     myServo.DEBUG_MODE(true);
-    myServo.move_to(0);
-    delay(1000);
-    myServo.move_to(45);
-    delay(1000);
-    myServo.move_to(90);
-    delay(1000);
-    myServo.move_to(120);
-    delay(1000);
-    myServo.move_to(150);
-    delay(1000);
-    myServo.move_to(180);
-    delay(1000);
+    while (1) {
+        for (int i = 0; i <= 180; i+=2) {
+            myServo.move_to(i);
+            delay(10);
+        }
+        for (int i = 180; i >= 0; i-=2) {
+            myServo.move_to(i);
+            delay(10);
+        }
+    }
 	return 0;
 }
