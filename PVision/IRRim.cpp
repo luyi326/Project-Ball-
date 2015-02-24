@@ -4,7 +4,8 @@
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
-#define IRRIM_SEEK_INTERVAL (20000) //interval is in microseconds
+#define IRRIM_SEEK_INTERVAL (40000) //interval is in microseconds
+#define IRRIM_RETRACK_INTERVAL (80000)
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
@@ -42,7 +43,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 
 IRRim::~IRRim() {
 	mux.reset();
-	delete sensors;
+	// delete sensors;
 }
 
 /**
@@ -79,7 +80,7 @@ void IRRim::seek() {
 		servo.move_to(servo_current_position);
 
 		read_IR(0);
-		read_IR(1);
+		// read_IR(1);
 
 		current_time = tmp;
 	} else {
@@ -89,17 +90,38 @@ void IRRim::seek() {
 
 }
 void IRRim::follow() {
+	timespec tmp;
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tmp);
 
+	if (read_IR(0)) {
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &current_time);
+		return;
+	}
+
+	timespec diff = time_diff(current_time, tmp);
+	if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_RETRACK_INTERVAL) {
+		servo_current_position += seeking_is_upwared ? -2 : 2;
+		cout << "Moving servo to position " << int(servo_current_position) << endl;
+		servo.move_to(servo_current_position);
+	} else {
+
+	}
+	// read_IR(0);
 }
 
-void IRRim::read_IR(uint8_t index) {
+bool IRRim::read_IR(uint8_t index) {
 	mux.selectChannel(PV_N(index));
 	uint8_t result = sensors[index].readBlob();
 	if (result & BLOB1)
 	{
+		is_seeking = false;
 		cout << index <<  " BLOB1 detected. X:" << sensors[index].Blob1.X << " Y:" << sensors[index].Blob1.Y;
 		cout << " Size: " << sensors[index].Blob1.Size << endl;
+		return true;
+	} else {
+		// is_seeking = true;
 	}
+	return false;
 }
 
 void IRRim::nextSensor() {

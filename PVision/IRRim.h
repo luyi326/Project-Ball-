@@ -43,7 +43,7 @@ public:
 	 */
 	void run();
 
-	void read_IR(uint8_t index);
+	bool read_IR(uint8_t index);
 
 private:
 	PCA9548A mux;
