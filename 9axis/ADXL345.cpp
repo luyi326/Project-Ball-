@@ -14,6 +14,7 @@ using namespace std;
 
 #define Register_ID 0
 #define Register_2D 0x2D
+#define ADX_RANGE 0x31
 #define Register_X0 0x32
 #define Register_X1 0x33
 #define Register_Y0 0x34
@@ -22,6 +23,7 @@ using namespace std;
 #define Register_Z1 0x37
 #define ADX_ADDR (0xA7 >> 1) //Essentially 0x53
 #define I2C_BUS_NAME "/dev/i2c-1"
+#define RAD_TO_DEG (M_PI/180.0f)
 
 double zeroValue[5] = { -200, 44, 660, 52.3, -18.5}; // Found by experimenting
 
@@ -31,12 +33,14 @@ int ADXL345::readAccX() {
     uint8_t results[2];
     results[0] = 0;
     results[1] = 0;
+    int result;
     writeByte(Register_X0);
     readResults=read(i2cDescriptor, results, 2);
-     if (readResult < 2) {
-        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+     if (readResults < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResults << " bytes";
         cout << ", error message: " << strerror(errno) << endl;
-        return ((double)result) / 256.0;
+        // return ((double)result) / 256.0;
+        return 0;
     }
     result = results[0];
     result <<= 8;
@@ -49,12 +53,14 @@ int ADXL345::readAccY() {
     uint8_t results[2];
     results[0] = 0;
     results[1] = 0;
+    int result;
     writeByte(Register_Y0);
     readResults=read(i2cDescriptor, results, 2);
-     if (readResult < 2) {
-        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+     if (readResults < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResults << " bytes";
         cout << ", error message: " << strerror(errno) << endl;
-        return ((double)result) / 256.0;
+        // return ((double)result) / 256.0;
+        return 0;
     }
     result = results[0];
     result <<= 8;
@@ -68,12 +74,14 @@ int ADXL345::readAccZ() {
     uint8_t results[2];
     results[0] = 0;
     results[1] = 0;
+    int result;
     writeByte(Register_Z0);
     readResults=read(i2cDescriptor, results, 2);
-     if (readResult < 2) {
-        cout << "ADXL345::readAxis:: read fail, read " << readResult << " bytes";
+     if (readResults < 2) {
+        cout << "ADXL345::readAxis:: read fail, read " << readResults << " bytes";
         cout << ", error message: " << strerror(errno) << endl;
-        return ((double)result) / 256.0;
+        // return ((double)result) / 256.0;
+        return 0;
     }
     result = results[0];
     result <<= 8;
@@ -106,6 +114,7 @@ void ADXL345::init() {
     writeResult &= write2Byte(0x31, 0x09); // Full resolution mode
     writeResult &= write2Byte(Register_2D,0x08); // Setup ADXL345 for constant measurement mode
     sensorReady = writeResult;
+    range=get_range();
 }
 
 /**
@@ -122,17 +131,16 @@ void ADXL345::init() {
 double ADXL345::readAxis(ADX_Axis axis) {
     switch (axis) {
         case ADX_X:
-            return ((double)readAccX()/256.0);
+            return ((double)convert_to_g(readAccX()));
             break;
         case ADX_Y:
-            return ((double)readAccY()/256.0);
+            return ((double)convert_to_g(readAccX()));
             break;
         case ADX_Z:
-            return ((double)readAccZ()/256.0);
+            return ((double)convert_to_g(readAccX()));
             break;
         default:
             cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
-            writeResult = false;
             break;
     }
 
@@ -145,23 +153,57 @@ double ADXL345::readAngle(ADX_Axis axis) {
     double accZval = (double)readAccZ() - zeroValue[2];
     switch (axis) {
         case ADX_X:
-            return (atan2(accXval, accZval) + PI) * RAD_TO_DEG;
+            return (atan2(accXval, accZval) + M_PI) * RAD_TO_DEG;
             break;
         case ADX_Y:
-            return (atan2(accYval, accZval) + PI) * RAD_TO_DEG;
+            return (atan2(accYval, accZval) + M_PI) * RAD_TO_DEG;
             break;
         case ADX_Z:
-            return (atan2(accXval, accYval) + PI) * RAD_TO_DEG;
+            return (atan2(accXval, accYval) + M_PI) * RAD_TO_DEG;
             break;
         default:
             cout << "ADXL345::readAxis::Unrecognized axis: " << axis << endl;
-            writeResult = false;
             break;
     }
 
    return 0;
 }
 
+
+double ADXL345::convert_to_g(int raw){
+    char negative = 0;
+    float result;
+    //Convert from twos complement
+    if((raw >> 15) == 1){
+                raw = ~raw + 1;
+                negative = 1;
+        }
+        result = (float)raw;
+        if(negative)
+                result *= -1;
+
+    //1FF is the maximum value of a 10-bit signed register
+    result = (double)range * (result/(0x1FF));
+    return result;
+}
+
+int ADXL345::get_range(){
+    int results[5];
+    int data;
+    writeByte(ADX_RANGE);
+    if(read(i2cDescriptor, results, 1) == 0)
+        return 0;
+    //Mask off non-range bits
+    data = results[0] & 0x3;
+        switch(data){
+                case 0x0: range = 2; break;
+                case 0x1: range = 4; break;
+                case 0x2: range = 8; break;
+                case 0x3: range = 16; break;
+                default: printf("Not a valid range.\n"); return 0;
+        }
+    return 1;
+}
 
 /**
  * @brief Initialize I2C bus
