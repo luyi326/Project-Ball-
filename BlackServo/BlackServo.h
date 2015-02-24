@@ -10,7 +10,7 @@
 
 using namespace BlackLib;
 
-class BlackServo{
+class BlackServo {
 
 public:
 	BlackServo(pwmName driver);
