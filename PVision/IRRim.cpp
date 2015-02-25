@@ -4,8 +4,8 @@
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
-#define IRRIM_SEEK_INTERVAL (40000) //interval is in microseconds
-#define IRRIM_RETRACK_INTERVAL (80000)
+#define IRRIM_SEEK_INTERVAL (10000000) //interval is in nanoseconds
+#define IRRIM_RETRACK_INTERVAL (20000000)
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
