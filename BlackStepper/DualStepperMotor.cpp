@@ -16,7 +16,10 @@ DualStepperMotor::DualStepperMotor(
 }
 
 DualStepperMotor::~DualStepperMotor() {
-
+	moveForward(10000);
+	while (!targetSpeedReached) {
+		run();
+	}
 }
 
 //Public functions
