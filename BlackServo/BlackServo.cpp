@@ -1,7 +1,7 @@
 #include "BlackServo.h"
 #include <unistd.h>
 
-#define SERVO_PERIOD 17
+#define SERVO_PERIOD 20
 #define DUTY_MIN 3
 #define DUTY_MAX 14.5
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
@@ -11,7 +11,7 @@ BlackServo::BlackServo(pwmName driver): _dutycycle(driver) {
 	Debug_flag = 0;
 	angle = 90;
 	_dutycycle.setDutyPercent(100.0);
-	_dutycycle.setPeriodTime(SERVO_PERIOD * 1000, BlackLib::microsecond);
+	_dutycycle.setPeriodTime(SERVO_PERIOD * 1000, microsecond);
 	_dutycycle.setDutyPercent(50.0);
 }
 
