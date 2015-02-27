@@ -16,8 +16,9 @@ DualStepperMotor::DualStepperMotor(
 }
 
 DualStepperMotor::~DualStepperMotor() {
+	setAcceleration(20);
 	moveForward(10000);
-	while (!targetSpeedReached) {
+	while (!targetSpeedReached()) {
 		run();
 	}
 }
