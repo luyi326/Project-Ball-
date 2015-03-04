@@ -140,3 +140,5 @@ docs/_build/
 # PyBuilder
 target/
 
+# SFTP
+sftp-config.json

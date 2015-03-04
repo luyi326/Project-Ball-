@@ -30,7 +30,7 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_26, EHRPWM2A, GPIO_44, EHRPWM1B);
+    motorPair = new DualStepperMotor(GPIO_26, EHRPWM2A, GPIO_44, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 170;
@@ -47,7 +47,7 @@ int main (int argc, char* argv[]) {
     motorPair->moveForward(speed);
     motorPair->setBias(bias);
 
-    rim = new IRRim(2, EHRPWM2B, GPIO_48);
+    rim = new IRRim(2, EHRPWM1B, GPIO_48);
 
     while (1) {
         timespec t1;
@@ -57,6 +57,9 @@ int main (int argc, char* argv[]) {
             motorPair->run();
         }
         rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
 
         timespec t2;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);

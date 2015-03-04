@@ -1,5 +1,4 @@
 #include <iostream>
-#include <chrono>
 #include <algorithm>
 #include <cmath>
 #include <unistd.h>
@@ -8,7 +7,7 @@ using namespace std;
 
 // #define STEPPER_DEBUG
 
-#define STEP_INTERVAL 5000
+#define STEP_INTERVAL 5000000
 // #define STEP_SIZE_FREQ 15
 #define DEFAULT_ACCEL_STEP 15
 
@@ -23,7 +22,7 @@ using namespace std;
 //Public functions
 BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(direction, output, SecureMode), _frequency(frequency) {
 	_speedReached = 1;
-	_last_timestamp = micros();
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &_last_timestamp);
 
 	_target_direction = _current_direction = 0;
 	_target_speed = _current_speed = PERIOD_MAX;
@@ -93,9 +92,13 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	_speedReached = 0;
 
 
-	if (micros() - _last_timestamp > STEP_INTERVAL) {
+	if (isLongEnough()) {
 #ifdef STEPPER_DEBUG
-		cout << "Updating motor motion, last timestamp: " << _last_timestamp << ", new timestamp: " << micros() << endl;
+		timespec temp;
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &temp);
+		cout << "Updating motor motion, last timestamp: ";
+		cout << _last_timestamp.tv_sec << "." << _last_timestamp.tv_nsec;
+		cout << ", new timestamp: " << temp.tv_sec << "." << temp.tv_nsec << endl;
 		cout << "Target direction: " << _target_direction << ", target speed: " << _target_speed << endl;
 #endif
 		int _cal_new_freq = (int)_current_freq;
@@ -159,13 +162,26 @@ void BlackStepper::setMovement(bool direction, uint64_t speed) {
 		}
 
 		// update timestamp
-		_last_timestamp = micros();
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &_last_timestamp);
 	}
 }
 
-inline unsigned long BlackStepper::micros() {
-    auto duration = std::chrono::system_clock::now().time_since_epoch();
-    return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+// inline unsigned long BlackStepper::micros() {
+//     auto duration = std::chrono::system_clock::now().time_since_epoch();
+//     return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+// }
+
+//Assume it always need less than 1s
+inline bool BlackStepper::isLongEnough() {
+	timespec temp_time;
+	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &temp_time);
+	if (temp_time.tv_sec - _last_timestamp.tv_sec != 0) {
+		return true;
+	}
+	if (temp_time.tv_nsec - _last_timestamp.tv_nsec > STEP_INTERVAL) {
+		return true;
+	}
+	return false;
 }
 
 inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {

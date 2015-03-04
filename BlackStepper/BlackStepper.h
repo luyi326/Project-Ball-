@@ -4,6 +4,7 @@
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackLib/BlackGPIO.h"
+#include <ctime>
 using namespace BlackLib;
 
 class BlackStepper {
@@ -17,7 +18,7 @@ private:
 	uint64_t _current_speed;
 	uint64_t _current_freq;
 
-	unsigned long _last_timestamp;
+	timespec _last_timestamp;
 
 	bool _target_direction;
 	uint64_t _target_speed;
@@ -30,7 +31,7 @@ private:
 
 	void setMovement(bool direction, uint64_t speed);
 	void setGPIOAndPWM(bool direction, uint64_t frequency);
-	unsigned long micros();
+	inline bool isLongEnough();
 
 public:
 	BlackStepper(gpioName direction, pwmName frequency);

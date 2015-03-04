@@ -17,12 +17,10 @@ public:
 	~BlackServo();
 	void move_to(int);
 	void move_to(float);
-	void DEBUG_MODE(bool);
 
 private:
 	BlackPWM _dutycycle;
 	float angle;
-	bool Debug_flag;
 };
 
 

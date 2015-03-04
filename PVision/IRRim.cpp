@@ -4,7 +4,7 @@
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
-#define IRRIM_SEEK_INTERVAL (200000) //interval is in nanoseconds
+#define IRRIM_SEEK_INTERVAL (100000000) //interval is in nanoseconds
 #define IRRIM_RETRACK_INTERVAL (20000)
 
 //Constructor and destructor
@@ -69,17 +69,22 @@ void IRRim::seek() {
 	if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_SEEK_INTERVAL) {
 
 		//Invert seeking direction if ends meet
-		if (seeking_is_upwared && servo_current_position == 180) {
+		if (seeking_is_upwared && servo_current_position >= 180) {
+			servo_current_position = 180;
 			seeking_is_upwared = false;
 		}
-		if (!seeking_is_upwared && servo_current_position == 0) {
+		if (!seeking_is_upwared && servo_current_position <= 0) {
+			servo_current_position = 0;
 			seeking_is_upwared = true;
 		}
 		servo_current_position += seeking_is_upwared ? 2 : -2;
+		cout << diff.tv_sec << "." << diff.tv_nsec << endl;
 		cout << "Moving servo to position " << int(servo_current_position) << endl;
 		servo.move_to(servo_current_position);
 
-		read_IR(0);
+		if (read_IR(0)) {
+			is_seeking = false;
+		}
 		// read_IR(1);
 
 		current_time = tmp;
@@ -87,26 +92,43 @@ void IRRim::seek() {
 		//Time not there yet
 	}
 
-
 }
+
+static int lostTargetCount = 0;
 void IRRim::follow() {
 	timespec tmp;
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tmp);
 
-	if (read_IR(0)) {
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &current_time);
-		return;
-	}
-
 	timespec diff = time_diff(current_time, tmp);
-	if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_RETRACK_INTERVAL) {
-		servo_current_position += seeking_is_upwared ? -2 : 2;
-		cout << "Moving servo to position " << int(servo_current_position) << endl;
-		servo.move_to(servo_current_position);
+		if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_SEEK_INTERVAL) {
+		if (read_IR(0)) {
+			lostTargetCount = 0;
+			if (sensors[0].Blob1.X < 300) {
+				if (servo_current_position < 0) {
+					cout << "servo out of range. " << endl;
+				}
+				servo.move_to(--servo_current_position);
+			} else if (sensors[0].Blob1.X > 700) {
+				servo.move_to(++servo_current_position);
+				if (servo_current_position > 180) {
+					cout << "servo out of range. " << endl;
+				}
+			}
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &current_time);
+		} else {
+			lostTargetCount++;
+			if (lostTargetCount > 4) {
+				cout << "Lost target!!" << endl;
+				// exit(0);
+				is_seeking = true;
+			} else {
+				cout << "Lost target " << lostTargetCount << " times" << endl;
+			}
+		}
 	} else {
 
 	}
-	// read_IR(0);
+
 }
 
 bool IRRim::read_IR(uint8_t index) {
