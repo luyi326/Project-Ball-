@@ -4,17 +4,20 @@
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
-#define IRRIM_SEEK_INTERVAL (100000000) //interval is in nanoseconds
+#define IRRIM_SEEK_INTERVAL (600000000) //interval is in nanoseconds
 #define IRRIM_RETRACK_INTERVAL (20000)
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 	mux(muxResetPin),
 	servo(servoPin),
-	state(IRRimState_Seeking),
+	state(IRRimState_seeking),
 	servo_current_position(0),
 	is_seeking(true),
-	seeking_is_upwared(true)
+	seeking_is_upwared(true),
+	current_iteration(0),
+	current_lower_bound(0),
+	current_upper_bound(180)
 	{
 	if (num_of_sensors > 6) {
 		cerr << "Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
@@ -67,18 +70,26 @@ void IRRim::seek() {
 
 	timespec diff = time_diff(current_time, tmp);
 	if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_SEEK_INTERVAL) {
-
+		current_iteration++;
+		if (current_iteration > 5 && (current_lower_bound != 0 || current_lower_bound != 180)) {
+			current_iteration = 0;
+			current_lower_bound -= 10;
+			current_upper_bound += 10;
+			if (current_lower_bound < 0) current_lower_bound = 0;
+			if (current_upper_bound > 180) current_upper_bound = 180;
+		}
 		//Invert seeking direction if ends meet
-		if (seeking_is_upwared && servo_current_position >= 180) {
-			servo_current_position = 180;
+		if (seeking_is_upwared && servo_current_position >= current_upper_bound) {
+			servo_current_position = current_upper_bound;
 			seeking_is_upwared = false;
 		}
-		if (!seeking_is_upwared && servo_current_position <= 0) {
-			servo_current_position = 0;
+		if (!seeking_is_upwared && servo_current_position <= current_lower_bound) {
+			servo_current_position = current_lower_bound;
 			seeking_is_upwared = true;
 		}
 		servo_current_position += seeking_is_upwared ? 2 : -2;
 		cout << diff.tv_sec << "." << diff.tv_nsec << endl;
+		cout << "Current upper bound = " << current_upper_bound << ", current lower bound is " << current_lower_bound << endl;
 		cout << "Moving servo to position " << int(servo_current_position) << endl;
 		servo.move_to(servo_current_position);
 
@@ -119,7 +130,11 @@ void IRRim::follow() {
 			lostTargetCount++;
 			if (lostTargetCount > 4) {
 				cout << "Lost target!!" << endl;
-				// exit(0);
+				current_lower_bound = servo_current_position - 10;
+				current_upper_bound = servo_current_position + 10;
+				current_iteration = 0;
+				if (current_lower_bound < 0) current_lower_bound = 0;
+				if (current_upper_bound > 180) current_upper_bound = 180;
 				is_seeking = true;
 			} else {
 				cout << "Lost target " << lostTargetCount << " times" << endl;

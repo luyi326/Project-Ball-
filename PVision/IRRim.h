@@ -15,8 +15,9 @@ using namespace std;
 using namespace BlackLib;
 
 enum IRRimState {
-	IRRimState_Seeking,
-	IRRimState_targetFound
+	IRRimState_seeking,
+	IRRimState_targetFound,
+	IRRimState_reversing
 };
 
 class IRRim {
@@ -52,6 +53,9 @@ private:
 	uint8_t sensor_count;
 	IRRimState state;
 	timespec current_time;
+	int current_iteration;
+	int current_lower_bound;
+	int current_upper_bound;
 
 	uint8_t servo_current_position;
 	bool is_seeking;
@@ -61,6 +65,7 @@ private:
 	void select(uint8_t num);
 	void seek();
 	void follow();
+	void reverse();
 
 	inline timespec time_diff(timespec t1, timespec t2);
 };

@@ -6,7 +6,7 @@
 #define DUTY_MAX 14.5
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
 
-// #define BLACK_SERVO_DEBUG
+#define BLACK_SERVO_DEBUG
 
 BlackServo::BlackServo(pwmName driver): _dutycycle(driver) {
 	//initialize pwm and use pwm;

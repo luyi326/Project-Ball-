@@ -13,7 +13,7 @@ void delay(float ms){
 }
 
 int main (int argc, char* argv[]) {
-    BlackServo myServo(EHRPWM1B);
+    BlackServo myServo(EHRPWM1A);
     while (1) {
         for (int i = 0; i <= 180; i+=2) {
             myServo.move_to(i);
