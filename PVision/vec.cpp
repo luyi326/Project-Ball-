@@ -8,7 +8,7 @@ vec::vec(float _x, float _y, float _z): x(_x), y(_y), z(_z) {
 
 }
 
-vec vec::operator+(const vec& v) {
+vec vec::operator+(const vec& v) const {
 	vec result;
 	result.x = this->x + v.x;
 	result.y = this->y + v.y;
@@ -16,7 +16,7 @@ vec vec::operator+(const vec& v) {
 	return result;
 }
 
-vec vec::operator-(const vec& v) {
+vec vec::operator-(const vec& v) const {
 	vec result;
 	result.x = this->x - v.x;
 	result.y = this->y - v.y;
@@ -24,7 +24,7 @@ vec vec::operator-(const vec& v) {
 	return result;
 }
 
-vec vec::operator*(const float& f) {
+vec vec::operator*(const float& f) const {
 	vec result;
 	result.x = this->x * f;
 	result.y = this->y * f;

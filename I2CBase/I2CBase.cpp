@@ -11,9 +11,9 @@
 
 using namespace std;
 
-I2CBase::I2CBase(string _busName, uint8_t _address) {
-	busName = _busName;
-	address = _address;
+I2CBase::I2CBase(string _busName, uint8_t _address) : address(_address), busName(_busName) {
+	// busName = _busName;
+	// address = _address;
 	i2cDescriptor = open(busName.c_str(), O_RDWR);
 	busReady = false;
 	if (i2cDescriptor < 0) {

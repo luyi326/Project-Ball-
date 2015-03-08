@@ -12,22 +12,23 @@
 #define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
 #define HALF_VERTICAL (FULL_VERTICAL/2)
 
-#define FULL_D_SENSOR (8.1)
+#define FULL_D_SENSOR (4.0f)
 #define HALF_D_SENSOR (FULL_D_SENSOR/2)
-#define TAN_16_5 (0.29621)
-#define TAN_11_5 (0.20345)
+#define TAN_16_5 (0.29621349496)
+#define TAN_11_5 (0.20345229942)
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 	mux(muxResetPin),
 	servo(servoPin),
+	sensor_count(0),
 	state(IRRimState_seeking),
-	servo_current_position(0),
-	is_seeking(true),
-	seeking_is_upwared(true),
 	current_iteration(0),
 	current_lower_bound(0),
 	current_upper_bound(180),
+	servo_current_position(0),
+	is_seeking(true),
+	seeking_is_upwared(true),
 	o_left(-HALF_D_SENSOR, 0, 0),
 	o_right(HALF_D_SENSOR, 0, 0),
 	o_left_m_right(-FULL_D_SENSOR, 0, 0)
@@ -70,11 +71,12 @@ void IRRim::reset() {
 }
 
 void IRRim::run() {
-	if (is_seeking) {
-		seek();
-	} else {
-		follow();
-	}
+	read_IR(0);
+	// if (is_seeking) {
+	// 	seek();
+	// } else {
+	// 	follow();
+	// }
 }
 
 void IRRim::seek() {
@@ -160,13 +162,22 @@ void IRRim::follow() {
 }
 
 bool IRRim::read_IR(uint8_t index) {
-	mux.selectChannel(PV_N(index));
-	uint8_t result = sensors[index].readBlob();
-	if (result & BLOB1)
+	mux.selectChannel(PV_N(0));
+	uint8_t result1 = sensors[0].readBlob();
+
+	mux.selectChannel(PV_N(1));
+	uint8_t result2 = sensors[1].readBlob();
+	// cout << "result1 = " << result1 << " result2 = " << result2 << endl;
+	if ((result1 & BLOB1) && (result2 & BLOB1))
 	{
 		is_seeking = false;
-		cout << index <<  " BLOB1 detected. X:" << sensors[index].Blob1.X << " Y:" << sensors[index].Blob1.Y;
-		cout << " Size: " << sensors[index].Blob1.Size << endl;
+		cout << 0 <<  " BLOB1 detected. X:" << sensors[0].Blob1.X << " Y:" << sensors[0].Blob1.Y;
+		cout << " Size: " << sensors[0].Blob1.Size << endl;
+
+		cout << 1 <<  " BLOB1 detected. X:" << sensors[1].Blob1.X << " Y:" << sensors[1].Blob1.Y;
+		cout << " Size: " << sensors[1].Blob1.Size << endl;
+		calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y);
+
 		return true;
 	} else {
 		// is_seeking = true;
@@ -195,11 +206,16 @@ inline timespec IRRim::time_diff(timespec t1, timespec t2) {
 inline void IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
 	vec dir_left = get_directional_vec(left_x, left_y);
 	vec dir_right = get_directional_vec(right_x, right_y);
+	cout << "directional left: " << dir_left << endl;
+	cout << "directional right: " << dir_right << endl;
 	float z_left, z_right;
 	calculate_intersection_point(dir_left, dir_right, z_left, z_right);
+	cout << "z_left = " << z_left << " z_right = " << z_right << endl;
 	vec s_C = o_left + (dir_left * z_left);
 	vec t_C = o_right + (dir_right * z_right);
-	vec mid = vec.mid_point(s_C, t_C);
+	cout << "s_C = " << s_C << " t_C = " << t_C << endl;
+	vec mid = vec::mid_point(s_C, t_C);
+	cout << "mid = " << mid << endl;
 }
 
 inline vec IRRim::get_directional_vec(int x, int y) {
@@ -211,11 +227,11 @@ inline vec IRRim::get_directional_vec(int x, int y) {
 }
 
 inline void IRRim::calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right) {
-	float a = vec.dot_product(directional_left, directional_left);
-	float b = vec.dot_product(directional_left, directional_right);
-	float c = vec.dot_product(directional_right, directional_right);
-	float d = vec.dot_product(directional_left, o_left_m_right);
-	float e = vec.dot_product(directional_right, o_left_m_right);
+	float a = vec::dot_product(directional_left, directional_left);
+	float b = vec::dot_product(directional_left, directional_right);
+	float c = vec::dot_product(directional_right, directional_right);
+	float d = vec::dot_product(directional_left, o_left_m_right);
+	float e = vec::dot_product(directional_right, o_left_m_right);
 
 	float ac_m_b_sq = a * c - b * b;
 	if (ac_m_b_sq == 0) {

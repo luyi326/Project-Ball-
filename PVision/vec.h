@@ -11,9 +11,9 @@ public:
 	float z;
 	vec();
 	vec(float, float, float);
-	vec operator+(const vec& v);
-	vec operator-(const vec& v);
-	vec operator*(const float& f);
+	vec operator+(const vec& v) const;
+	vec operator-(const vec& v) const;
+	vec operator*(const float& f) const;
 	static float dot_product(const vec& v1, const vec& v2);
 	static vec mid_point(const vec& v1, const vec& v2);
 };
