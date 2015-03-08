@@ -6,6 +6,7 @@
 #include <ctime>
 #include "PVision.h"
 #include "PCA9548A.h"
+#include "vec.h"
 #include "../BlackLib/BlackCore.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
@@ -61,6 +62,10 @@ private:
 	bool is_seeking;
 	bool seeking_is_upwared;
 
+	const vec o_left;
+	const vec o_right;
+	const vec o_left_m_right;
+
 	void nextSensor();
 	void select(uint8_t num);
 	void seek();
@@ -68,6 +73,10 @@ private:
 	void reverse();
 
 	inline timespec time_diff(timespec t1, timespec t2);
+
+	inline void calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
+	inline vec get_directional_vec(int x, int y);
+	inline void calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right);
 };
 
 #endif

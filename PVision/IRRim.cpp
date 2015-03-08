@@ -7,6 +7,16 @@
 #define IRRIM_SEEK_INTERVAL (600000000) //interval is in nanoseconds
 #define IRRIM_RETRACK_INTERVAL (20000)
 
+#define FULL_HORIZONTAL (1000)
+#define FULL_VERTICAL (750)
+#define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
+#define HALF_VERTICAL (FULL_VERTICAL/2)
+
+#define FULL_D_SENSOR (8.1)
+#define HALF_D_SENSOR (FULL_D_SENSOR/2)
+#define TAN_16_5 (0.29621)
+#define TAN_11_5 (0.20345)
+
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 	mux(muxResetPin),
@@ -17,7 +27,10 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
 	seeking_is_upwared(true),
 	current_iteration(0),
 	current_lower_bound(0),
-	current_upper_bound(180)
+	current_upper_bound(180),
+	o_left(-HALF_D_SENSOR, 0, 0),
+	o_right(HALF_D_SENSOR, 0, 0),
+	o_left_m_right(-FULL_D_SENSOR, 0, 0)
 	{
 	if (num_of_sensors > 6) {
 		cerr << "Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
@@ -177,4 +190,39 @@ inline timespec IRRim::time_diff(timespec t1, timespec t2) {
 		temp.tv_nsec = t2.tv_nsec - t1.tv_nsec;
 	}
 	return temp;
+}
+
+inline void IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
+	vec dir_left = get_directional_vec(left_x, left_y);
+	vec dir_right = get_directional_vec(right_x, right_y);
+	float z_left, z_right;
+	calculate_intersection_point(dir_left, dir_right, z_left, z_right);
+	vec s_C = o_left + (dir_left * z_left);
+	vec t_C = o_right + (dir_right * z_right);
+	vec mid = vec.mid_point(s_C, t_C);
+}
+
+inline vec IRRim::get_directional_vec(int x, int y) {
+	vec result;
+	result.x =((float)(x - HALF_HORIZONTAL)) * TAN_16_5 / HALF_HORIZONTAL;
+	result.y =((float)(y - HALF_VERTICAL)) * TAN_11_5 / HALF_VERTICAL;
+	result.z = 1.0f;
+	return result;
+}
+
+inline void IRRim::calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right) {
+	float a = vec.dot_product(directional_left, directional_left);
+	float b = vec.dot_product(directional_left, directional_right);
+	float c = vec.dot_product(directional_right, directional_right);
+	float d = vec.dot_product(directional_left, o_left_m_right);
+	float e = vec.dot_product(directional_right, o_left_m_right);
+
+	float ac_m_b_sq = a * c - b * b;
+	if (ac_m_b_sq == 0) {
+		cerr << "The two directional vectors are parallel!!! Please check implementation or sensor placement" << endl;
+		z_left = 0.0f;
+		z_right = 0.0f;
+	}
+	z_left = (b * e - c * d) / ac_m_b_sq;
+	z_right = (a * e - b * d) / ac_m_b_sq;
 }
