@@ -1,6 +1,8 @@
 #include <iostream>
+#include <signal.h>
 #include <unistd.h>
 #include "../BlackLib/BlackLib.h"
+#include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "./BlackServo.h"
 
@@ -11,18 +13,48 @@ void delay(float ms){
     usleep(lround(ms*1000));
     return;
 }
+BlackServo* myServo;
+
+void sig_handler(int signo)
+{
+    if (signo == SIGINT) {
+        cout << "\nReceived SIGINT" << endl;
+        myServo->move_to(90);
+        delay(100);
+        delete myServo;
+        exit(0);
+    }
+}
+
 
 int main (int argc, char* argv[]) {
-    BlackServo myServo(EHRPWM1A);
-    while (1) {
-        for (int i = 0; i <= 180; i+=2) {
-            myServo.move_to(i);
-            delay(10);
-        }
-        for (int i = 180; i >= 0; i-=2) {
-            myServo.move_to(i);
-            delay(10);
-        }
+    if (signal(SIGINT, sig_handler) == SIG_ERR) {
+        cout << "Cannot register SIGINT handler" << endl;
+        return 1;
     }
+    myServo = new BlackServo(EHRPWM1A, AIN0);
+    myServo->calibrate();
+    return 0;
+    float precent = 100;
+    if (argc >= 2) {
+        precent = atoi(argv[1]);
+    }
+    while (1) {
+        myServo->move_to(precent);
+        delay(10);
+        myServo->current_position();
+    }
+    // while (1) {
+    //     for (int i = 0; i <= 180; i+=1) {
+    //         myServo.move_to(i);
+    //         myServo.current_position();
+    //         delay(1);
+    //     }
+    //     for (int i = 180; i >= 0; i-=1) {
+    //         myServo.move_to(i);
+    //         myServo.current_position();
+    //         delay(1);
+    //     }
+    // }
 	return 0;
 }
