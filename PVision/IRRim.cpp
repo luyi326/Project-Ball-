@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define IR_RIM_DEBUG
+
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
 #define IRRIM_SEEK_INTERVAL (600000000) //interval is in nanoseconds
@@ -202,6 +204,8 @@ inline timespec IRRim::time_diff(timespec t1, timespec t2) {
 	}
 	return temp;
 }
+
+//Z positioning algos starts here
 
 inline void IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
 	vec dir_left = get_directional_vec(left_x, left_y);

@@ -21,6 +21,7 @@ public:
 	void move_to(float);
 	void set_duty_percent(float);
 	float current_position();
+	bool target_position_reached();
 
 private:
 	BlackPWM _dutycycle;
@@ -29,6 +30,7 @@ private:
 	bool _calibrated;
 	float _adc_pos_low;
 	float _adc_pos_high;
+	float _adc_span;
 };
 
 

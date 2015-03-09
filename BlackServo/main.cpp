@@ -34,16 +34,18 @@ int main (int argc, char* argv[]) {
     }
     myServo = new BlackServo(EHRPWM1A, AIN0);
     myServo->calibrate();
-    return 0;
     float precent = 100;
     if (argc >= 2) {
         precent = atoi(argv[1]);
     }
-    while (1) {
-        myServo->move_to(precent);
-        delay(10);
-        myServo->current_position();
-    }
+    myServo->move_to(precent);
+    delay(10);
+    myServo->current_position();
+    myServo->current_position();
+    myServo->target_position_reached();
+
+
+
     // while (1) {
     //     for (int i = 0; i <= 180; i+=1) {
     //         myServo.move_to(i);
