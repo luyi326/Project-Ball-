@@ -6,13 +6,13 @@ using namespace std;
 #define MAX_TIME_NEED_TO_ROTATE_US 1000000
 
 #define SERVO_PERIOD 20
-#define DUTY_MIN 0.625f
-#define DUTY_MAX 11.875f
+#define DUTY_MIN 2.5f
+#define DUTY_MAX 12.0f
 // #define DUTY_MIN 2.27f
 // #define DUTY_MAX 12.14f
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
 
-#define TOLERANCE 2
+#define TOLERANCE 0.03f
 
 #define BLACK_SERVO_DEBUG
 
@@ -84,7 +84,10 @@ bool BlackServo::target_position_reached() {
 	cout << "target adc value: " << target_adc_val;
 	cout << ", real adc value: " << real_adc_val << endl;
 	#endif
-	return true;
+	if (abs(target_adc_val - real_adc_val) < TOLERANCE) {
+		return true;
+	}
+	return false;
 }
 
 void BlackServo::set_duty_percent(float target_duty) {

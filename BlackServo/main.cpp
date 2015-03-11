@@ -39,24 +39,23 @@ int main (int argc, char* argv[]) {
         precent = atoi(argv[1]);
     }
     myServo->move_to(precent);
-    delay(10);
-    myServo->current_position();
-    myServo->current_position();
-    myServo->target_position_reached();
+    // delay(1000);
 
 
 
-    // while (1) {
-    //     for (int i = 0; i <= 180; i+=1) {
-    //         myServo.move_to(i);
-    //         myServo.current_position();
-    //         delay(1);
-    //     }
-    //     for (int i = 180; i >= 0; i-=1) {
-    //         myServo.move_to(i);
-    //         myServo.current_position();
-    //         delay(1);
-    //     }
-    // }
+    while (!myServo->target_position_reached()) {
+    }
+    delay(1000);
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
+    cout << "Target position reached: " << myServo->current_position() << endl;
 	return 0;
 }
