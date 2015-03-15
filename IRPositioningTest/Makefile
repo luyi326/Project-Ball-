@@ -15,8 +15,8 @@ SERVO_DIR = ../BlackServo/
 PIXDIR = ../PVision/
 I2CDIR = ../I2CBase/
 
-BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o
-BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h
+BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackADC.o
+BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackADC.h
 
 MOTOR_OBJ = BlackServo.o
 MOTOR_HEADER = $(SERVO_DIR)BlackServo.h
@@ -33,7 +33,7 @@ $(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I
 BlackStepper.o: $(STEPPER_DIR)BlackStepper.h $(OBJDIR)BlackPWM.h
 	$(CC) $(CFLAGS) -c $(STEPPER_DIR)BlackStepper.cpp
 
-BlackServo.o: $(SERVO_DIR)BlackServo.h $(OBJDIR)BlackPWM.h
+BlackServo.o: $(SERVO_DIR)BlackServo.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackADC.h
 	$(CC) $(CFLAGS) -c $(SERVO_DIR)BlackServo.cpp
 
 DualStepperMotor.o: $(STEPPER_DIR)DualStepperMotor.h $(STEPPER_DIR)BlackStepper.h

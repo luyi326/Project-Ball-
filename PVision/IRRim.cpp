@@ -52,6 +52,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			//TODO: Fill this place with apporiate logger: spdLogger, Boost logger etc..
 		}
 	}
+	servo.calibrate();
 	servo.move_to(0);
 
 	usleep(100); // Allow initial setup time
