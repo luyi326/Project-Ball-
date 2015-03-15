@@ -20,9 +20,9 @@
 #define TAN_11_5 (0.20345229942)
 
 //Constructor and destructor
-IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin) :
+IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName adcPin) :
 	mux(muxResetPin),
-	servo(servoPin),
+	servo(servoPin, adcPin),
 	sensor_count(0),
 	state(IRRimState_seeking),
 	current_iteration(0),
