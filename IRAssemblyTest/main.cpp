@@ -47,7 +47,7 @@ int main (int argc, char* argv[]) {
     motorPair->moveForward(speed);
     motorPair->setBias(bias);
 
-    rim = new IRRim(2, EHRPWM1B, GPIO_48);
+    rim = new IRRim(2, EHRPWM1B, GPIO_48, AIN0);
 
     while (1) {
         timespec t1;

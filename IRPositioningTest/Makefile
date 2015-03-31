@@ -21,8 +21,8 @@ BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h 
 MOTOR_OBJ = BlackServo.o
 MOTOR_HEADER = $(SERVO_DIR)BlackServo.h
 
-I2C_OBJ = I2CBase.o PCA9548A.o PVision.o IRRim.o vec.o
-I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)IRRim.h $(PIXDIR)vec.h
+I2C_OBJ = I2CBase.o PCA9548A.o PVision.o IRRim.o vec.o BlobCompare.o
+I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)IRRim.h $(PIXDIR)vec.h $(PIXDIR)BlobCompare.h
 
 all: $(TARGET)
 
@@ -51,6 +51,9 @@ PVision.o: $(PIXDIR)PVision.h
 
 vec.o: $(PIXDIR)vec.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)vec.cpp
+
+BlobCompare.o: $(PIXDIR)BlobCompare.h
+	$(CC) $(CFLAGS) -c $(PIXDIR)BlobCompare.cpp
 
 IRRim.o: $(I2C_HEADER) $(BLACK_LIB_HEADER) $(SERVO_DIR)BlackServo.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)IRRim.cpp

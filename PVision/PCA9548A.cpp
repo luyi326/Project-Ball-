@@ -6,6 +6,8 @@
 
 
 PCA9548A::PCA9548A(gpioName reset_pin_name): I2CBase(I2C_BUS_NAME, MUX_ADDRESS), reset_pin(reset_pin_name, output, SecureMode) {
+	reset_pin.setValue((digitalValue)0);
+	usleep(100);
 	reset_pin.setValue((digitalValue)1);
 }
 

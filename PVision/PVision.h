@@ -27,6 +27,14 @@ struct Blob
    	uint8_t number;
 };
 
+typedef struct BlobCluster_t {
+	Blob first;
+	Blob second;
+	Blob third;
+	Blob forth;
+	int validBlobCount;
+} BlobCluster;
+
 class PVision
 {
 

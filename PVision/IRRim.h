@@ -21,13 +21,18 @@ enum IRRimState {
 	IRRimState_reversing
 };
 
+enum IRSensorPair {
+	IRSensorPairFront,
+	IRSensorPairBack
+};
+
 class IRRim {
 public:
 	/**
 	 *	Constructor of IRRim
 	 *	mux is an array of mux GPIO bits from MSB to LSB
 	 */
-	IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName adcPin);
+	IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName feedbackPin);
 
 	/**
 	 *
@@ -45,7 +50,7 @@ public:
 	 */
 	void run();
 
-	bool read_IR(uint8_t index);
+	bool read_IR(IRSensorPair pair);
 
 private:
 	PCA9548A mux;
@@ -71,6 +76,8 @@ private:
 	void seek();
 	void follow();
 	void reverse();
+
+	inline void validateBlob(uint8_t index_left, uint8_t index_right);
 
 	inline timespec time_diff(timespec t1, timespec t2);
 
