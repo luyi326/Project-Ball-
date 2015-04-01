@@ -1,5 +1,6 @@
 #include "BlobCompare.h"
 #include <iostream>
+#include <cmath>
 using namespace std;
 
 inline BlobCluster sortedBlob(uint8_t result, PVision* pv);
@@ -105,7 +106,7 @@ Blob average(uint8_t result, PVision* pv) {
 		avgBlob.Y = -1;
 		return avgBlob;
 	}
-	avgBlob.X /= count;
-	avgBlob.Y /= count;
+	avgBlob.X = int(lround(float(avgBlob.X) / count));
+	avgBlob.Y = int(lround(float(avgBlob.Y) / count));
 	return avgBlob;
 }
