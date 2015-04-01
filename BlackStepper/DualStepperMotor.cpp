@@ -36,6 +36,17 @@ void DualStepperMotor::moveBackward(uint64_t speed) {
 	rightStepper.run(1, speed);
 }
 
+void DualStepperMotor::leftSpin(uint64_t speed) {
+	leftStepper.run(0, speed);
+	rightStepper.run(0, speed);
+}
+
+void DualStepperMotor::rightSpin(uint64_t speed) {
+	leftStepper.run(1, speed);
+	rightStepper.run(1, speed);
+}
+
+
 void DualStepperMotor::setAcceleration(uint16_t acceration_step) {
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
