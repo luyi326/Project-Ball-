@@ -72,6 +72,7 @@ public:
 	void run();
 
 	IRReadResult read_IR(IRSensorPair pair);
+	IRReadResult read_IR(IRSensorPair pair, Blob* left_avg, Blob* right_avg);
 
 private:
 	PCA9548A mux;

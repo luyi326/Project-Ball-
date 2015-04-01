@@ -101,6 +101,8 @@ Blob average(uint8_t result, PVision* pv) {
 		avgBlob.Y += pv->Blob4.Y;
 	}
 	if (count == 0) {
+		avgBlob.X = -1;
+		avgBlob.Y = -1;
 		return avgBlob;
 	}
 	avgBlob.X /= count;

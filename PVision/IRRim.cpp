@@ -23,8 +23,12 @@
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
 
+
+float PID_kernel(PID_IRRim& pid, float error, float position);
+void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin);
+
 //PID control kernel
-float PID_kernel(PID_IRRim& pid, float error, float position){
+float PID_kernel(PID_IRRim& pid, float error, float position) {
 	float pTerm, dTerm, iTerm;
 	pTerm = pid.pGain * error; // calculate the proportional term
 	// calculate the integral state with appropriate limiting
@@ -38,12 +42,12 @@ float PID_kernel(PID_IRRim& pid, float error, float position){
 		//return pTerm + dTerm;
 }
 
-void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin){
-	PID_speed.dGain=dg;
-	PID_speed.iGain=ig;
-	PID_speed.pGain=pg;
-	PID_speed.iMax=imax;
-	PID_speed.iMin=imin;
+void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin) {
+	PID_speed.dGain = dg;
+	PID_speed.iGain = ig;
+	PID_speed.pGain = pg;
+	PID_speed.iMax = imax;
+	PID_speed.iMin = imin;
 
 }
 
@@ -147,7 +151,8 @@ void IRRim::seek() {
 void IRRim::follow() {
 	//experimental code for PID control start
 	//step1 get camera position
-	IRReadResult ir_state = read_IR(IRSensorPairFront);
+	Blob left_avg, right_avg;
+	IRReadResult ir_state = read_IR(IRSensorPairFront, &left_avg, &right_avg);
 	//step2 calculate camera values
 	int middle_point=0;
 	int middle_err=0;
@@ -174,6 +179,8 @@ void IRRim::follow() {
 		case IRReadResultMiddle:
 			cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
+			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
+			cout << "Target location: " << target_location << endl;
 			middle_point=sensors[1].Blob1.X-(1000-sensors[0].Blob1.X);
 			cout<<"middle_point: "<<middle_point<<endl;
 		break;
@@ -187,7 +194,7 @@ void IRRim::follow() {
 		middle_err=0;
 		return;
 	}
-	//step3 put value and desire position into PID
+	//step3 put value and desire posi tion into PID
 	int correct=int(lround(PID_kernel(pid_rim,middle_err,middle_point)));
 	cout<<"Correction is: "<<correct<<endl;
 	if(correct>3){
@@ -240,7 +247,7 @@ void IRRim::follow() {
 	// servo.move_to(servo_current_position);
 }
 
-IRReadResult IRRim::read_IR(IRSensorPair pair) {
+IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg) {
 	uint8_t result1, result2;
 	PVision* pv1;
 	PVision* pv2;
@@ -263,34 +270,43 @@ IRReadResult IRRim::read_IR(IRSensorPair pair) {
 		break;
 	}
 
-	BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
-	if (normalized_result[0].validBlobCount != 0 || normalized_result[1].validBlobCount != 0) {
-		if (Blob_is_valid(normalized_result[0].first) && Blob_is_valid(normalized_result[1].first)) {
+	// BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
+	Blob left_avg = average(result1, pv1);
+	Blob right_avg = average(result2, pv2);
+	if (Blob_is_valid(left_avg) || Blob_is_valid(right_avg)) {
+		if (Blob_is_valid(left_avg) && Blob_is_valid(right_avg)) {
 			//When Blob1 is in vision of both left and right cameras, if the Blobs are on edge of the cameras, location of the
 			//blob will still be recognized as not in the middle (left or right).
-			if (normalized_result[0].first.X < LEFT_QUARTER_HORIZONTAL && normalized_result[1].first.X < LEFT_QUARTER_HORIZONTAL) {
+			if (left_avg.X < LEFT_QUARTER_HORIZONTAL && right_avg.X < LEFT_QUARTER_HORIZONTAL) {
 				return IRReadResultBlobOnLeft;
 			}
-			if (normalized_result[0].first.X > RIGHT_QUARTER_HORIZONTAL && normalized_result[1].first.X > RIGHT_QUARTER_HORIZONTAL) {
+			if (left_avg.X > RIGHT_QUARTER_HORIZONTAL && right_avg.X > RIGHT_QUARTER_HORIZONTAL) {
 				return IRReadResultBlobOnRight;
 			}
 			return IRReadResultMiddle;
-		} else if (Blob_is_valid(normalized_result[0].second) && Blob_is_valid(normalized_result[1].second)) {
-			if (normalized_result[0].second.X < LEFT_QUARTER_HORIZONTAL && normalized_result[1].second.X < LEFT_QUARTER_HORIZONTAL) {
-				return IRReadResultBlobOnLeft;
-			}
-			if (normalized_result[0].second.X > RIGHT_QUARTER_HORIZONTAL && normalized_result[1].second.X > RIGHT_QUARTER_HORIZONTAL) {
-				return IRReadResultBlobOnRight;
-			}
-			return IRReadResultMiddle;
-		} else if (Blob_is_valid(normalized_result[0].first)) {
+		} else if (Blob_is_valid(left_avg)) {
 			return IRReadResultBlobOnLeft;
-		} else if (Blob_is_valid(normalized_result[1].first)) {
+		} else if (Blob_is_valid(right_avg)) {
 			return IRReadResultBlobOnRight;
 		}
 	}
 	// cout << "left can see " << normalized_result[0].validBlobCount << " blobs and right can see " << normalized_result[1].validBlobCount << endl;
+	if (_left_avg != NULL) {
+		_left_avg->X = left_avg.X;
+		_left_avg->Y = left_avg.Y;
+		_left_avg->Size = left_avg.Size;
+	}
+	if (_right_avg != NULL) {
+		_right_avg->X = right_avg.X;
+		_right_avg->Y = right_avg.Y;
+		_right_avg->Size = right_avg.Size;
+	}
 	return IRReadResultLost;
+
+}
+
+IRReadResult IRRim::read_IR(IRSensorPair pair) {
+	return read_IR(pair, NULL, NULL);
 }
 
 void IRRim::nextSensor() {
