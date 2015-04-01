@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctime>
+#include "../naughtyException/naughtyException.h"
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
@@ -47,7 +48,14 @@ int main (int argc, char* argv[]) {
     motorPair->moveForward(speed);
     motorPair->setBias(bias);
 
-    rim = new IRRim(2, EHRPWM1B, GPIO_48, AIN0);
+    try {
+        rim = new IRRim(2, EHRPWM1B, GPIO_48, AIN0);
+    } catch (naughty_exception ex) {
+        if (ex == naughty_exception_PVisionWriteFail) {
+            cerr << "One or more IR sensors are malfunctioning, exiting" << endl;
+            exit(1);
+        }
+    }
 
     while (1) {
         timespec t1;
@@ -61,17 +69,17 @@ int main (int argc, char* argv[]) {
         // rim->run();
         // rim->run();
 
-        timespec t2;
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+        // timespec t2;
+        // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
 
-        timespec temp;
-        if ((t2.tv_nsec-t1.tv_nsec)<0) {
-            temp.tv_sec = t2.tv_sec-t1.tv_sec-1;
-            temp.tv_nsec = 1000000000+t2.tv_nsec-t1.tv_nsec;
-        } else {
-            temp.tv_sec = t2.tv_sec-t1.tv_sec;
-            temp.tv_nsec = t2.tv_nsec-t1.tv_nsec;
-        }
+        // timespec temp;
+        // if ((t2.tv_nsec-t1.tv_nsec)<0) {
+        //     temp.tv_sec = t2.tv_sec-t1.tv_sec-1;
+        //     temp.tv_nsec = 1000000000+t2.tv_nsec-t1.tv_nsec;
+        // } else {
+        //     temp.tv_sec = t2.tv_sec-t1.tv_sec;
+        //     temp.tv_nsec = t2.tv_nsec-t1.tv_nsec;
+        // }
         // cout << temp.tv_sec << "." << temp.tv_nsec << endl;
     }
 

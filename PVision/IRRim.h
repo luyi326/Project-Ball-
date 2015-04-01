@@ -11,6 +11,7 @@
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackServo/BlackServo.h"
+#include "../naughtyException/naughtyException.h"
 
 using namespace std;
 using namespace BlackLib;

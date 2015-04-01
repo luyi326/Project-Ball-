@@ -51,6 +51,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 		mux.selectChannel(PV_N(i));
 		if (!sensors[i].init()) {
 			cerr << "Sensor No. " << i + 1 << " not initialized correctly" << endl;
+			throw naughty_exception_PVisionWriteFail;
 		} else {
 			//TODO: Fill this place with apporiate logger: spdLogger, Boost logger etc..
 		}
@@ -87,15 +88,20 @@ void IRRim::run() {
 }
 
 void IRRim::seek() {
+	servo.move_to(servo_current_position);
 	if (servo.target_position_reached()) {
 		if (servo_current_position == 0) {
 			servo_current_position = 180;
+			cout << "Moving to 180" << endl;
 		} else {
 			servo_current_position = 0;
+			cout << "Moving to 0" << endl;
 		}
 	}
 	if (read_IR(IRSensorPairFront)) {
+		cout << "Saw a target, entering follow mode" << endl;
 		servo_current_position = (int)servo.current_position();
+		cout << "Servo redirecting to " << int(servo_current_position) << endl;
 		is_seeking = false;
 	}
 	servo.move_to(servo_current_position);
@@ -167,7 +173,7 @@ bool IRRim::read_IR(IRSensorPair pair) {
 	}
 
 	BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
-	if (normalized_result[0].validBlobCount != 0 || normalized_result[0].validBlobCount != 1) {
+	if (normalized_result[0].validBlobCount != 0 || normalized_result[1].validBlobCount != 0) {
 		return true;
 	}
 
