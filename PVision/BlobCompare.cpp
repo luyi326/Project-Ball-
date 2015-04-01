@@ -68,3 +68,42 @@ inline void invalidateBlob(Blob* b) {
 	b->Y = -1;
 	b->Size = 1;
 }
+
+Blob average(uint8_t result, PVision* pv) {
+	Blob avgBlob;
+	avgBlob.X = 0;
+	avgBlob.Y = 0;
+	avgBlob.Size = 1;
+	int count = 0;
+	if (result & BLOB4) {
+		count = 4;
+	} else if (result & BLOB3) {
+		count = 3;
+	} else if (result & BLOB2) {
+		count = 2;
+	} else if (result & BLOB1) {
+		count = 1;
+	}
+	if (result & BLOB1) {
+		avgBlob.X += pv->Blob1.X;
+		avgBlob.Y += pv->Blob1.Y;
+	}
+	if (result & BLOB2) {
+		avgBlob.X += pv->Blob2.X;
+		avgBlob.Y += pv->Blob2.Y;
+	}
+	if (result & BLOB3) {
+		avgBlob.X += pv->Blob3.X;
+		avgBlob.Y += pv->Blob3.Y;
+	}
+	if (result & BLOB4) {
+		avgBlob.X += pv->Blob4.X;
+		avgBlob.Y += pv->Blob4.Y;
+	}
+	if (count == 0) {
+		return avgBlob;
+	}
+	avgBlob.X /= count;
+	avgBlob.Y /= count;
+	return avgBlob;
+}

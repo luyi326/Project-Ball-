@@ -32,7 +32,7 @@ int main (int argc, char* argv[]) {
         cout << "Cannot register SIGINT handler" << endl;
         return 1;
     }
-    myServo = new BlackServo(EHRPWM1A, AIN0);
+    myServo = new BlackServo(EHRPWM1B, AIN0);
     myServo->calibrate();
     float precent = 100;
     if (argc >= 2) {

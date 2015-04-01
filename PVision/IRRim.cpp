@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "BlobCompare.h"
 
-#define IR_RIM_DEBUG
+// #define IR_RIM_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+2))
@@ -22,6 +22,34 @@
 #define HALF_D_SENSOR (FULL_D_SENSOR/2)
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
+
+//PID control kernel
+float PID_kernel(PID_IRRim& pid, float error, float position){
+	float pTerm, dTerm, iTerm;
+	pTerm = pid.pGain * error; // calculate the proportional term
+	// calculate the integral state with appropriate limiting
+	pid.iState += error;
+	if (pid.iState > pid.iMax) pid.iState = pid.iMax;
+	else if (pid.iState < pid.iMin) pid.iState = pid.iMin;
+	iTerm = pid.iGain * (pid.iState); // calculate the integral term
+	dTerm = pid.dGain * (pid.dState - position);
+	pid.dState = position;
+	return pTerm + dTerm + iTerm;
+		//return pTerm + dTerm;
+}
+
+void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin){
+	PID_speed.dGain=dg;
+	PID_speed.iGain=ig;
+	PID_speed.pGain=pg;
+	PID_speed.iMax=imax;
+	PID_speed.iMin=imin;
+
+}
+
+static PID_IRRim pid_rim;
+
+
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName feedbackPin) :
@@ -44,6 +72,8 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 		exit(1);
 	}
 
+	//set PID seed
+	PID_set(pid_rim,0,1.0f/70,1.0f/80,3,0);
 
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];
@@ -115,8 +145,12 @@ void IRRim::seek() {
 
 // static int lostTargetCount = 0;
 void IRRim::follow() {
-	// servo.move_to(servo_current_position);
+	//experimental code for PID control start
+	//step1 get camera position
 	IRReadResult ir_state = read_IR(IRSensorPairFront);
+	//step2 calculate camera values
+	int middle_point=0;
+	int middle_err=0;
 	switch (ir_state) {
 		case IRReadResultLost:
 			cout << "Target lost, going back to seeking" << endl;
@@ -125,24 +159,85 @@ void IRRim::follow() {
 			break;
 		case IRReadResultBlobOnLeft:
 			cout << "IR is on left" << endl;
-			servo_current_position -= 1;
-			cout << "Servo moving clockwise" << endl;
+			middle_point=-(1000-sensors[0].Blob1.X);
+			cout<<"Left middle_point: "<<middle_point<<endl;
+			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
 			break;
 		case IRReadResultBlobOnRight:
 			cout << "IR is on right" << endl;
-			servo_current_position += 1;
-			cout << "Servo moving counterclockwise" << endl;
+			middle_point=sensors[1].Blob1.X;
+			cout<<"Right middle_point: "<<middle_point<<endl;
+			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
 			break;
 		case IRReadResultMiddle:
 			cout << "IR is in the middle" << endl;
-			cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
+			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
+			middle_point=sensors[1].Blob1.X-(1000-sensors[0].Blob1.X);
+			cout<<"middle_point: "<<middle_point<<endl;
 		break;
 	}
+
+	if(middle_point>30){
+		middle_err=middle_point-30;
+	}else if(middle_point<-30){
+		middle_err=middle_point+30;
+	}else{
+		middle_err=0;
+		return;
+	}
+	//step3 put value and desire position into PID
+	int correct=int(lround(PID_kernel(pid_rim,middle_err,middle_point)));
+	cout<<"Correction is: "<<correct<<endl;
+	if(correct>3){
+		correct=correct-3;
+	}else if(correct<-3){
+		correct=correct+3;
+	}else{
+		correct=0;
+		return;
+	}
+	servo_current_position = (int)servo.current_position()+correct;
+	// servo_current_position = (int)servo.current_position();
+	//add error output to servo
 	if (servo_current_position < 0) servo_current_position = 0;
 	if (servo_current_position > 180) servo_current_position = 180;
 	servo.move_to(servo_current_position);
+
+
+
+	//experimental code for PID control end
+
+
+	// servo.move_to(servo_current_position);
+	// IRReadResult ir_state = read_IR(IRSensorPairFront);
+	// switch (ir_state) {
+	// 	case IRReadResultLost:
+	// 		cout << "Target lost, going back to seeking" << endl;
+	// 		is_seeking = true;
+	// 		current_lower_bound = current_upper_bound = servo_current_position;
+	// 		break;
+	// 	case IRReadResultBlobOnLeft:
+	// 		cout << "IR is on left" << endl;
+	// 		servo_current_position -= 1;
+	// 		cout << "Servo moving clockwise" << endl;
+	// 		// exit(0);
+	// 		break;
+	// 	case IRReadResultBlobOnRight:
+	// 		cout << "IR is on right" << endl;
+	// 		servo_current_position += 1;
+	// 		cout << "Servo moving counterclockwise" << endl;
+	// 		// exit(0);
+	// 		break;
+	// 	case IRReadResultMiddle:
+	// 		cout << "IR is in the middle" << endl;
+	// 		cout << "Mid point: " << calculate_target_coordinate([0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
+	// 	break;
+	// }
+	// if (servo_current_position < 0) servo_current_position = 0;
+	// if (servo_current_position > 180) servo_current_position = 180;
+	// servo.move_to(servo_current_position);
 }
 
 IRReadResult IRRim::read_IR(IRSensorPair pair) {
@@ -171,6 +266,8 @@ IRReadResult IRRim::read_IR(IRSensorPair pair) {
 	BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
 	if (normalized_result[0].validBlobCount != 0 || normalized_result[1].validBlobCount != 0) {
 		if (Blob_is_valid(normalized_result[0].first) && Blob_is_valid(normalized_result[1].first)) {
+			//When Blob1 is in vision of both left and right cameras, if the Blobs are on edge of the cameras, location of the
+			//blob will still be recognized as not in the middle (left or right).
 			if (normalized_result[0].first.X < LEFT_QUARTER_HORIZONTAL && normalized_result[1].first.X < LEFT_QUARTER_HORIZONTAL) {
 				return IRReadResultBlobOnLeft;
 			}

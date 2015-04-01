@@ -36,6 +36,17 @@ enum IRReadResult {
 	IRReadResultMiddle
 };
 
+typedef struct {
+	float dState; // Last position input
+	float iState; // Integrator state
+	float iMax, iMin; // Maximum and minimum allowable integrator stat
+	float iGain; // integral gain
+	float pGain; // proportional gain
+	float dGain; // derivative gain
+
+}PID_IRRim;
+
+
 class IRRim {
 public:
 	/**

@@ -8,13 +8,11 @@ using namespace std;
 #define SERVO_PERIOD 20
 #define DUTY_MIN 2.5f
 #define DUTY_MAX 12.0f
-// #define DUTY_MIN 2.27f
-// #define DUTY_MAX 12.14f
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
 
 #define TOLERANCE 0.03f
 
-#define BLACK_SERVO_DEBUG
+// #define BLACK_SERVO_DEBUG
 
 BlackServo::BlackServo(pwmName driver, adcName adcPin):
  _dutycycle(driver),

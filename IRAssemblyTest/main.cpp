@@ -65,9 +65,8 @@ int main (int argc, char* argv[]) {
             motorPair->run();
         }
         rim->run();
-        rim->run();
-        rim->run();
-        rim->run();
+        usleep(10000);
+
 
         // timespec t2;
         // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
