@@ -92,12 +92,16 @@ void IRRim::run() {
 void IRRim::seek() {
 	servo.move_to(servo_current_position);
 	if (servo.target_position_reached()) {
-		if (servo_current_position == 0) {
-			servo_current_position = 180;
-			cout << "Moving to 180" << endl;
+		if (servo_current_position == current_lower_bound) {
+			servo_current_position = current_upper_bound;
+			if (current_lower_bound > 0) current_lower_bound -= 10;
+			if (current_lower_bound < 0) current_lower_bound = 0;
+			cout << "Moving to " << int(current_upper_bound) << endl;
 		} else {
-			servo_current_position = 0;
-			cout << "Moving to 0" << endl;
+			servo_current_position = current_lower_bound;
+			if (current_upper_bound < 180) current_upper_bound += 10;
+			if (current_upper_bound > 180) current_upper_bound = 180;
+			cout << "Moving to " << int(current_lower_bound) << endl;
 		}
 	}
 	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
@@ -117,7 +121,7 @@ void IRRim::follow() {
 		case IRReadResultLost:
 			cout << "Target lost, going back to seeking" << endl;
 			is_seeking = true;
-			servo_current_position = 0;
+			current_lower_bound = current_upper_bound = servo_current_position;
 			break;
 		case IRReadResultBlobOnLeft:
 			cout << "IR is on left" << endl;
