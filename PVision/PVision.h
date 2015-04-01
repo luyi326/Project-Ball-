@@ -10,6 +10,7 @@
 #define PVision_h
 
 #include <iostream>
+using namespace std;
 
 // bit flags for blobs
 #define BLOB1 0x01
@@ -26,6 +27,9 @@ struct Blob
    	int Size;
    	uint8_t number;
 };
+
+bool Blob_is_valid(Blob& b);
+ostream& operator<<(ostream& os, const Blob& b);
 
 typedef struct BlobCluster_t {
 	Blob first;

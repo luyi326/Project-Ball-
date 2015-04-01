@@ -24,6 +24,24 @@ using namespace std;
 
 #define I2C_BUS_NAME "/dev/i2c-1"
 
+/**
+ * @brief Blob Utility
+ * @details [long description]
+ *
+ * @param b [description]
+ * @return [description]
+ */
+
+bool Blob_is_valid(Blob& b) {
+    if (b.X == -1 && b.Y == -1) return false;
+    return true;
+}
+
+ostream& operator<<(ostream& os, const Blob& b) {
+    os << "(" << int(b.X) << ", " << int(b.Y) << ", " << int(b.Size) << ")";
+    return os;
+}
+
 /******************************************************************************
 * Private methods
 ******************************************************************************/

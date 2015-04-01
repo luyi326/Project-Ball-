@@ -15,6 +15,8 @@
 #define FULL_VERTICAL (750)
 #define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
 #define HALF_VERTICAL (FULL_VERTICAL/2)
+#define LEFT_QUARTER_HORIZONTAL (FULL_HORIZONTAL/4)
+#define RIGHT_QUARTER_HORIZONTAL (3*FULL_HORIZONTAL/4)
 
 #define FULL_D_SENSOR (4.0f)
 #define HALF_D_SENSOR (FULL_D_SENSOR/2)
@@ -98,7 +100,7 @@ void IRRim::seek() {
 			cout << "Moving to 0" << endl;
 		}
 	}
-	if (read_IR(IRSensorPairFront)) {
+	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
 		cout << "Saw a target, entering follow mode" << endl;
 		servo_current_position = (int)servo.current_position();
 		cout << "Servo redirecting to " << int(servo_current_position) << endl;
@@ -109,47 +111,37 @@ void IRRim::seek() {
 
 // static int lostTargetCount = 0;
 void IRRim::follow() {
+	// servo.move_to(servo_current_position);
+	IRReadResult ir_state = read_IR(IRSensorPairFront);
+	switch (ir_state) {
+		case IRReadResultLost:
+			cout << "Target lost, going back to seeking" << endl;
+			is_seeking = true;
+			servo_current_position = 0;
+			break;
+		case IRReadResultBlobOnLeft:
+			cout << "IR is on left" << endl;
+			servo_current_position -= 1;
+			cout << "Servo moving clockwise" << endl;
+			// exit(0);
+			break;
+		case IRReadResultBlobOnRight:
+			cout << "IR is on right" << endl;
+			servo_current_position += 1;
+			cout << "Servo moving counterclockwise" << endl;
+			// exit(0);
+			break;
+		case IRReadResultMiddle:
+			cout << "IR is in the middle" << endl;
+			cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
+		break;
+	}
+	if (servo_current_position < 0) servo_current_position = 0;
+	if (servo_current_position > 180) servo_current_position = 180;
 	servo.move_to(servo_current_position);
-	// timespec tmp;
-	// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tmp);
-
-	// timespec diff = time_diff(current_time, tmp);
-	// 	if (diff.tv_sec == 0 && diff.tv_nsec >= IRRIM_SEEK_INTERVAL) {
-	// 	if (read_IR(0)) {
-	// 		lostTargetCount = 0;
-	// 		if (sensors[0].Blob1.X < 300) {
-	// 			if (servo_current_position < 0) {
-	// 				cout << "servo out of range. " << endl;
-	// 			}
-	// 			servo.move_to(--servo_current_position);
-	// 		} else if (sensors[0].Blob1.X > 700) {
-	// 			servo.move_to(++servo_current_position);
-	// 			if (servo_current_position > 180) {
-	// 				cout << "servo out of range. " << endl;
-	// 			}
-	// 		}
-	// 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &current_time);
-	// 	} else {
-	// 		lostTargetCount++;
-	// 		if (lostTargetCount > 4) {
-	// 			cout << "Lost target!!" << endl;
-	// 			current_lower_bound = servo_current_position - 10;
-	// 			current_upper_bound = servo_current_position + 10;
-	// 			current_iteration = 0;
-	// 			if (current_lower_bound < 0) current_lower_bound = 0;
-	// 			if (current_upper_bound > 180) current_upper_bound = 180;
-	// 			is_seeking = true;
-	// 		} else {
-	// 			cout << "Lost target " << lostTargetCount << " times" << endl;
-	// 		}
-	// 	}
-	// } else {
-
-	// }
-
 }
 
-bool IRRim::read_IR(IRSensorPair pair) {
+IRReadResult IRRim::read_IR(IRSensorPair pair) {
 	uint8_t result1, result2;
 	PVision* pv1;
 	PVision* pv2;
@@ -174,26 +166,30 @@ bool IRRim::read_IR(IRSensorPair pair) {
 
 	BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
 	if (normalized_result[0].validBlobCount != 0 || normalized_result[1].validBlobCount != 0) {
-		return true;
+		if (Blob_is_valid(normalized_result[0].first) && Blob_is_valid(normalized_result[1].first)) {
+			if (normalized_result[0].first.X < LEFT_QUARTER_HORIZONTAL && normalized_result[1].first.X < LEFT_QUARTER_HORIZONTAL) {
+				return IRReadResultBlobOnLeft;
+			}
+			if (normalized_result[0].first.X > RIGHT_QUARTER_HORIZONTAL && normalized_result[1].first.X > RIGHT_QUARTER_HORIZONTAL) {
+				return IRReadResultBlobOnRight;
+			}
+			return IRReadResultMiddle;
+		} else if (Blob_is_valid(normalized_result[0].second) && Blob_is_valid(normalized_result[1].second)) {
+			if (normalized_result[0].second.X < LEFT_QUARTER_HORIZONTAL && normalized_result[1].second.X < LEFT_QUARTER_HORIZONTAL) {
+				return IRReadResultBlobOnLeft;
+			}
+			if (normalized_result[0].second.X > RIGHT_QUARTER_HORIZONTAL && normalized_result[1].second.X > RIGHT_QUARTER_HORIZONTAL) {
+				return IRReadResultBlobOnRight;
+			}
+			return IRReadResultMiddle;
+		} else if (Blob_is_valid(normalized_result[0].first)) {
+			return IRReadResultBlobOnLeft;
+		} else if (Blob_is_valid(normalized_result[1].first)) {
+			return IRReadResultBlobOnRight;
+		}
 	}
-
-	// if ((result1 & BLOB1) && (result2 & BLOB1))
-	// {
-	// 	is_seeking = false;
-	// 	#ifdef IR_RIM_DEBUG
-	// 	cout << 0 <<  " BLOB1 detected. X:" << sensors[0].Blob1.X << " Y:" << sensors[0].Blob1.Y;
-	// 	cout << " Size: " << sensors[0].Blob1.Size << endl;
-
-	// 	cout << 1 <<  " BLOB1 detected. X:" << sensors[1].Blob1.X << " Y:" << sensors[1].Blob1.Y;
-	// 	cout << " Size: " << sensors[1].Blob1.Size << endl;
-	// 	#endif
-	// 	calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y);
-
-	// 	return true;
-	// } else {
-	// 	// is_seeking = true;
-	// }
-	return false;
+	// cout << "left can see " << normalized_result[0].validBlobCount << " blobs and right can see " << normalized_result[1].validBlobCount << endl;
+	return IRReadResultLost;
 }
 
 void IRRim::nextSensor() {
@@ -221,7 +217,7 @@ inline timespec IRRim::time_diff(timespec t1, timespec t2) {
 
 //Z positioning algos starts here
 
-inline void IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
+inline vec IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
 	vec dir_left = get_directional_vec(left_x, left_y);
 	vec dir_right = get_directional_vec(right_x, right_y);
 	#ifdef IR_RIM_DEBUG
@@ -242,6 +238,7 @@ inline void IRRim::calculate_target_coordinate(int left_x, int left_y, int right
 	#ifdef IR_RIM_DEBUG
 	cout << "mid = " << mid << endl;
 	#endif
+	return mid;
 }
 
 inline vec IRRim::get_directional_vec(int x, int y) {

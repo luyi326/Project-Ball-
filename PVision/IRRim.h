@@ -13,6 +13,8 @@
 #include "../BlackServo/BlackServo.h"
 #include "../naughtyException/naughtyException.h"
 
+//TODO: Resolve write fail errors and deallocation delay
+
 using namespace std;
 using namespace BlackLib;
 
@@ -25,6 +27,13 @@ enum IRRimState {
 enum IRSensorPair {
 	IRSensorPairFront,
 	IRSensorPairBack
+};
+
+enum IRReadResult {
+	IRReadResultLost,
+	IRReadResultBlobOnLeft,
+	IRReadResultBlobOnRight,
+	IRReadResultMiddle
 };
 
 class IRRim {
@@ -51,7 +60,7 @@ public:
 	 */
 	void run();
 
-	bool read_IR(IRSensorPair pair);
+	IRReadResult read_IR(IRSensorPair pair);
 
 private:
 	PCA9548A mux;
@@ -82,7 +91,7 @@ private:
 
 	inline timespec time_diff(timespec t1, timespec t2);
 
-	inline void calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
+	inline vec calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
 	inline vec get_directional_vec(int x, int y);
 	inline void calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right);
 };
