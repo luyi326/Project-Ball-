@@ -24,7 +24,7 @@
 #define TAN_11_5 (0.20345229942)
 
 #define SERVO_SEEK_TOLERANCE BLACK_SERVO_DEFAULT_TOLERANCE
-#define SERVO_FOLLOW_TOLERANCE 0.05f
+#define SERVO_FOLLOW_TOLERANCE 0.10f
 
 
 float PID_kernel(PID_IRRim& pid, float error, float position);
@@ -80,7 +80,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	}
 
 	//set PID seed
-	PID_set(pid_rim,0.5,1.0f/50,1.0f/90,3,0);
+	PID_set(pid_rim,0.5,1.0f/100,1.0f/100,3,0);
 
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];
@@ -103,8 +103,6 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 
 	usleep(100); // Allow initial setup time
 
-	//All ready, record clock and start
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &current_time);
 }
 
 IRRim::~IRRim() {
@@ -163,10 +161,23 @@ void IRRim::follow() {
 	int middle_err = 0;
 	switch (ir_state) {
 		case IRReadResultLost:
-			cout << "Target lost, going back to seeking" << endl;
-			is_seeking = true;
-			servo.set_tolerance(SERVO_SEEK_TOLERANCE);
-			current_lower_bound = current_upper_bound = servo_current_position;
+			timespec tmp;
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tmp);
+			timespec diff;
+			if ((tmp.tv_nsec - target_last_seen.tv_nsec) < 0) {
+				diff.tv_sec = tmp.tv_sec - target_last_seen.tv_sec - 1;
+				diff.tv_nsec = 1000000000 + tmp.tv_nsec - target_last_seen.tv_nsec;
+			} else {
+				diff.tv_sec = tmp.tv_sec - target_last_seen.tv_sec;
+				diff.tv_nsec = tmp.tv_nsec - target_last_seen.tv_nsec;
+			}
+			// timespec diff time_diff(tmp, target_last_seen);
+			if (tmp.tv_sec != 0 || tmp.tv_nsec >= 800000000) {
+				cout << "Target lost, going back to seeking" << endl;
+				is_seeking = true;
+				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
+				current_lower_bound = current_upper_bound = servo_current_position;
+			}
 			break;
 		case IRReadResultBlobOnLeft:
 			cout << "IR is on left" << endl;
@@ -174,6 +185,7 @@ void IRRim::follow() {
 			cout << "Left middle_point: " << middle_point<<endl;
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			break;
 		case IRReadResultBlobOnRight:
 			cout << "IR is on right" << endl;
@@ -181,6 +193,7 @@ void IRRim::follow() {
 			cout << "Right middle_point: " << middle_point << endl;
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			break;
 		case IRReadResultMiddle:
 			cout << "IR is in the middle" << endl;
@@ -189,13 +202,14 @@ void IRRim::follow() {
 			cout << "Target location: " << target_location << endl;
 			middle_point = right_avg.X - (FULL_HORIZONTAL - left_avg.X);
 			cout << "middle_point: " << middle_point << endl;
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 		break;
 	}
 
-	if (middle_point > 50) {
-		middle_err = middle_point - 50;
-	} else if (middle_point < -50) {
-		middle_err = middle_point + 50;
+	if (middle_point > 150) {
+		middle_err = middle_point - 150;
+	} else if (middle_point < -150) {
+		middle_err = middle_point + 150;
 	} else {
 		middle_err = 0;
 		return;
@@ -326,17 +340,47 @@ inline void validateBlob(uint8_t index_left, uint8_t index_right) {
 
 }
 
-inline timespec IRRim::time_diff(timespec t1, timespec t2) {
-	timespec temp;
-	if ((t2.tv_nsec - t1.tv_nsec) < 0) {
-		temp.tv_sec = t2.tv_sec - t1.tv_sec - 1;
-		temp.tv_nsec = 1000000000 + t2.tv_nsec - t1.tv_nsec;
-	} else {
-		temp.tv_sec = t2.tv_sec - t1.tv_sec;
-		temp.tv_nsec = t2.tv_nsec - t1.tv_nsec;
-	}
-	return temp;
-}
+// inline timespec IRRim::time_diff(timespec a, timespec b) {
+// 	struct timespec r;
+// 	time_t rs = a.tv_sec;
+// 	time_t bs = b.tv_sec;
+// 	int ns = a.tv_nsec - b.tv_nsec;
+// 	int rns = ns;
+
+// 	if (ns < 0)
+// 	{
+// 		rns = ns + 1000000000;
+// 		if (rs == TYPE_MINIMUM (time_t))
+// 		{
+// 		if (bs <= 0)
+// 			goto low_overflow;
+// 			bs--;
+// 		}
+// 		else
+// 			rs--;
+// 	}
+
+// 	if (INT_SUBTRACT_OVERFLOW (rs, bs))
+// 	{
+// 		if (rs < 0)
+// 		{
+// 			low_overflow:
+// 			rs = TYPE_MINIMUM (time_t);
+// 			rns = 0;
+// 		}
+// 		else
+// 		{
+// 			rs = TYPE_MAXIMUM (time_t);
+// 			rns = 999999999;
+// 		}
+// 	}
+// 	else
+// 		rs -= bs;
+
+// 	r.tv_sec = rs;
+// 	r.tv_nsec = rns;
+// 	return r;
+// }
 
 //Z positioning algos starts here
 

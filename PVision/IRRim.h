@@ -80,7 +80,7 @@ private:
 	BlackServo servo;
 	uint8_t sensor_count;
 	IRRimState state;
-	timespec current_time;
+	timespec target_last_seen;
 	int current_iteration;
 	int current_lower_bound;
 	int current_upper_bound;
@@ -101,7 +101,7 @@ private:
 
 	inline void validateBlob(uint8_t index_left, uint8_t index_right);
 
-	inline timespec time_diff(timespec t1, timespec t2);
+	// inline timespec time_diff(timespec t1, timespec t2);
 
 	inline vec calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
 	inline vec get_directional_vec(int x, int y);
