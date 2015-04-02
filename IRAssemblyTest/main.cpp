@@ -65,7 +65,11 @@ int main (int argc, char* argv[]) {
             motorPair->run();
         }
         rim->run();
-        usleep(10000);
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        // usleep(10000);
 
 
         // timespec t2;
