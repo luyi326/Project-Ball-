@@ -10,7 +10,6 @@ using namespace std;
 #define DUTY_MAX 12.0f
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
 
-#define TOLERANCE 0.03f
 
 // #define BLACK_SERVO_DEBUG
 
@@ -21,7 +20,8 @@ BlackServo::BlackServo(pwmName driver, adcName adcPin):
  _calibrated(false),
  _adc_pos_low(0.0f),
  _adc_pos_high(0.0f),
- _adc_span(0.0f) {
+ _adc_span(0.0f),
+ _tolerance(BLACK_SERVO_DEFAULT_TOLERANCE) {
 	//initialize pwm and use pwm;
 	_dutycycle.setDutyPercent(100.0);
 	_dutycycle.setPeriodTime(SERVO_PERIOD * 1000, microsecond);
@@ -42,6 +42,10 @@ void BlackServo::calibrate() {
 	cout << ", at high degrees reads: " << _adc_pos_high;
 	cout << ", span: " << _adc_span << endl;
 	#endif
+}
+
+void BlackServo::set_tolerance(float tolerance) {
+	_tolerance = tolerance;
 }
 
 void BlackServo::move_to(int angle) {
@@ -82,7 +86,7 @@ bool BlackServo::target_position_reached() {
 	cout << "target adc value: " << target_adc_val;
 	cout << ", real adc value: " << real_adc_val << endl;
 	#endif
-	if (abs(target_adc_val - real_adc_val) < TOLERANCE) {
+	if (abs(target_adc_val - real_adc_val) < _tolerance) {
 		return true;
 	}
 	return false;

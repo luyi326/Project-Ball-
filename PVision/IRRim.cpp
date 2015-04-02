@@ -23,6 +23,9 @@
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
 
+#define SERVO_SEEK_TOLERANCE BLACK_SERVO_DEFAULT_TOLERANCE
+#define SERVO_FOLLOW_TOLERANCE 0.05f
+
 
 float PID_kernel(PID_IRRim& pid, float error, float position);
 void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin);
@@ -77,7 +80,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	}
 
 	//set PID seed
-	PID_set(pid_rim,0,1.0f/70,1.0f/80,3,0);
+	PID_set(pid_rim,0.5,1.0f/50,1.0f/90,3,0);
 
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];
@@ -95,6 +98,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	}
 	servo.calibrate();
 	cout << "Servo calibration complete" << endl;
+	servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 	servo.move_to(0);
 
 	usleep(100); // Allow initial setup time
@@ -143,6 +147,7 @@ void IRRim::seek() {
 		servo_current_position = (int)servo.current_position();
 		cout << "Servo redirecting to " << int(servo_current_position) << endl;
 		is_seeking = false;
+		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
 	}
 	servo.move_to(servo_current_position);
 }
@@ -154,25 +159,26 @@ void IRRim::follow() {
 	Blob left_avg, right_avg;
 	IRReadResult ir_state = read_IR(IRSensorPairFront, &left_avg, &right_avg);
 	//step2 calculate camera values
-	int middle_point=0;
-	int middle_err=0;
+	int middle_point = 0;
+	int middle_err = 0;
 	switch (ir_state) {
 		case IRReadResultLost:
 			cout << "Target lost, going back to seeking" << endl;
 			is_seeking = true;
+			servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 			current_lower_bound = current_upper_bound = servo_current_position;
 			break;
 		case IRReadResultBlobOnLeft:
 			cout << "IR is on left" << endl;
-			middle_point=-(1000-sensors[0].Blob1.X);
-			cout<<"Left middle_point: "<<middle_point<<endl;
+			middle_point = - (FULL_HORIZONTAL - left_avg.X);
+			cout << "Left middle_point: " << middle_point<<endl;
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
 			break;
 		case IRReadResultBlobOnRight:
 			cout << "IR is on right" << endl;
-			middle_point=sensors[1].Blob1.X;
-			cout<<"Right middle_point: "<<middle_point<<endl;
+			middle_point = right_avg.X;
+			cout << "Right middle_point: " << middle_point << endl;
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
 			break;
@@ -181,31 +187,31 @@ void IRRim::follow() {
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
 			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
 			cout << "Target location: " << target_location << endl;
-			middle_point=sensors[1].Blob1.X-(1000-sensors[0].Blob1.X);
-			cout<<"middle_point: "<<middle_point<<endl;
+			middle_point = right_avg.X - (FULL_HORIZONTAL - left_avg.X);
+			cout << "middle_point: " << middle_point << endl;
 		break;
 	}
 
-	if(middle_point>30){
-		middle_err=middle_point-30;
-	}else if(middle_point<-30){
-		middle_err=middle_point+30;
-	}else{
-		middle_err=0;
+	if (middle_point > 50) {
+		middle_err = middle_point - 50;
+	} else if (middle_point < -50) {
+		middle_err = middle_point + 50;
+	} else {
+		middle_err = 0;
 		return;
 	}
 	//step3 put value and desire posi tion into PID
-	int correct=int(lround(PID_kernel(pid_rim,middle_err,middle_point)));
-	cout<<"Correction is: "<<correct<<endl;
-	if(correct>3){
-		correct=correct-3;
-	}else if(correct<-3){
-		correct=correct+3;
-	}else{
-		correct=0;
-		return;
-	}
-	servo_current_position = (int)servo.current_position()+correct;
+	int correct = int(lround(PID_kernel(pid_rim, middle_err, middle_point)));
+	cout << "Correction is: " << correct << endl;
+	// if (correct > 3) {
+	// 	correct = correct - 3;
+	// } else if (correct < -3) {
+	// 	correct = correct + 3;
+	// } else {
+	// 	correct = 0;
+	// 	return;
+	// }
+	servo_current_position = (int)servo.current_position() + correct;
 	// servo_current_position = (int)servo.current_position();
 	//add error output to servo
 	if (servo_current_position < 0) servo_current_position = 0;
@@ -273,6 +279,16 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	// BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
 	Blob left_avg = average(result1, pv1);
 	Blob right_avg = average(result2, pv2);
+	if (_left_avg != NULL) {
+		_left_avg->X = left_avg.X;
+		_left_avg->Y = left_avg.Y;
+		_left_avg->Size = left_avg.Size;
+	}
+	if (_right_avg != NULL) {
+		_right_avg->X = right_avg.X;
+		_right_avg->Y = right_avg.Y;
+		_right_avg->Size = right_avg.Size;
+	}
 	if (Blob_is_valid(left_avg) || Blob_is_valid(right_avg)) {
 		if (Blob_is_valid(left_avg) && Blob_is_valid(right_avg)) {
 			//When Blob1 is in vision of both left and right cameras, if the Blobs are on edge of the cameras, location of the
@@ -291,16 +307,6 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 		}
 	}
 	// cout << "left can see " << normalized_result[0].validBlobCount << " blobs and right can see " << normalized_result[1].validBlobCount << endl;
-	if (_left_avg != NULL) {
-		_left_avg->X = left_avg.X;
-		_left_avg->Y = left_avg.Y;
-		_left_avg->Size = left_avg.Size;
-	}
-	if (_right_avg != NULL) {
-		_right_avg->X = right_avg.X;
-		_right_avg->Y = right_avg.Y;
-		_right_avg->Size = right_avg.Size;
-	}
 	return IRReadResultLost;
 
 }

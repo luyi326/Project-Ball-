@@ -11,6 +11,8 @@
 
 using namespace BlackLib;
 
+#define BLACK_SERVO_DEFAULT_TOLERANCE 0.03f
+
 class BlackServo {
 
 public:
@@ -22,6 +24,7 @@ public:
 	void set_duty_percent(float);
 	float current_position();
 	bool target_position_reached();
+	void set_tolerance(float);
 
 private:
 	BlackPWM _dutycycle;
@@ -31,6 +34,7 @@ private:
 	float _adc_pos_low;
 	float _adc_pos_high;
 	float _adc_span;
+	float _tolerance;
 };
 
 
