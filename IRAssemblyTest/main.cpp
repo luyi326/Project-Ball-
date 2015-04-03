@@ -68,7 +68,10 @@ int main (int argc, char* argv[]) {
         rim->run();
         rim->run();
         rim->run();
-        rim->run();
+        IR_target target = rim->run();
+        if (target.target_located) {
+            cout << target << endl;
+        }
         // usleep(10000);
 
 

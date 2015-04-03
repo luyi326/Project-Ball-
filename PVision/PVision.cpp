@@ -17,6 +17,7 @@
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
+#include "../naughtyException/naughtyException.h"
 
 using namespace std;
 
@@ -47,15 +48,17 @@ ostream& operator<<(ostream& os, const Blob& b) {
 ******************************************************************************/
 bool PVision::Write_2bytes(uint8_t d1, uint8_t d2) {
     if (!busReady) {
-        cout << "PVision::Write_2bytes:: Bus not ready, doing nothing" << endl;
+        cerr << "PVision::Write_2bytes:: Bus not ready, doing nothing" << endl;
+        throw naughty_exception_I2CError;
         return false;
     }
     char word[2];
     word[0] = d1;
     word[1] = d2;
     if (write(i2cDescriptor, word, 2) == -1) {
-        cout << "PVision::Write_2bytes:: write fail";
-        cout << ", error message: " << strerror(errno) << endl;
+        cerr << "PVision::Write_2bytes:: write fail";
+        cerr << ", error message: " << strerror(errno) << endl;
+        throw naughty_exception_PVisionWriteFail;
         return false;
     }
     return true;
@@ -64,13 +67,15 @@ bool PVision::Write_2bytes(uint8_t d1, uint8_t d2) {
 bool PVision::initI2CBus() {
     i2cDescriptor = open(I2C_BUS_NAME, O_RDWR);
     if (i2cDescriptor < 0) {
-        cout << "PVision::initI2CBus::Open i2c bus " << I2C_BUS_NAME;
-        cout << " error, error message: " << strerror(errno) << endl;
+        cerr << "PVision::initI2CBus::Open i2c bus " << I2C_BUS_NAME;
+        cerr << " error, error message: " << strerror(errno) << endl;
+        throw naughty_exception_PVisionReadFail;
         return false;
     }
     if (ioctl(i2cDescriptor, I2C_SLAVE, SENSOR_ADDRESS) < 0) {
-        cout << "PVision::initI2CBus::Init slave " << SENSOR_ADDRESS;
-        cout << "error, error message: " << strerror(errno) << endl;
+        cerr << "PVision::initI2CBus::Init slave " << SENSOR_ADDRESS;
+        cerr << "error, error message: " << strerror(errno) << endl;
+        throw naughty_exception_PVisionReadFail;
         return false;
     }
     busReady = true;
@@ -93,8 +98,8 @@ PVision::PVision() : busReady(false), sensorReady(false) {
 ******************************************************************************/
 PVision::~PVision() {
     if (close(i2cDescriptor) == -1) {
-        cout << "PVision::~PVision:: write fail";
-        cout << ", error message: " << strerror(errno) << endl;
+        cerr << "PVision::~PVision:: write fail";
+        cerr << ", error message: " << strerror(errno) << endl;
     }
 }
 
@@ -104,7 +109,8 @@ PVision::~PVision() {
 // init the PVision sensor
 bool PVision::init () {
     if (!busReady) {
-        cout << "PVision::init:: Bus not ready, doing nothing" << endl;
+        cerr << "PVision::init:: Bus not ready, doing nothing" << endl;
+        throw naughty_exception_I2CError;
         return false;
     }
     // IRsensorAddress = SENSOR_ADDRESS;
@@ -134,17 +140,20 @@ bool PVision::isSensorReady() {
 
 uint8_t PVision::readBlob() {
     if (!busReady) {
-        cout << "PVision::read:: Bus not ready, doing nothing" << endl;
+        cerr << "PVision::read:: Bus not ready, doing nothing" << endl;
+        throw naughty_exception_I2CError;
         return 0x00;
     }
     if (!sensorReady) {
-        cout << "PVision::read:: Sensor not ready, doing nothing" << endl;
+        cerr << "PVision::read:: Sensor not ready, doing nothing" << endl;
+        throw naughty_exception_PVisionReadFail;
         return 0x00;
     }
     char requestByte = 0x36;
     if (write(i2cDescriptor, &requestByte, 1) == -1) {
-        cout << "PVision::read:: write fail";
-        cout << ", error message: " << strerror(errno) << endl;
+        cerr << "PVision::read:: write fail";
+        cerr << ", error message: " << strerror(errno) << endl;
+        throw naughty_exception_PVisionWriteFail;
         return 0x00;
     }
 
@@ -170,8 +179,9 @@ uint8_t PVision::readBlob() {
     // }
     int readResult = read(i2cDescriptor, data_buf, 16);
     if (readResult < 0) {
-        cout << "PVision::read:: read fail, read " << readResult << " bytes";
-        cout << ", error message: " << strerror(errno) << endl;
+        cerr << "PVision::read:: read fail, read " << readResult << " bytes";
+        cerr << ", error message: " << strerror(errno) << endl;
+        throw naughty_exception_PVisionReadFail;
         return 0x00;
     }
     // cout << "Got " << readResult << " byte" << endl;

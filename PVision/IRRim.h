@@ -61,7 +61,7 @@ typedef struct {
 	uint16_t angle; //clockwise, up front is 0 degrees
 	float distance; // distance in cm
 } IR_target;
-
+ostream& operator<<(ostream& os, const IR_target& t);
 
 /**
  * @brief [brief description]

@@ -30,6 +30,16 @@
 float PID_kernel(PID_IRRim& pid, float error, float position);
 void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float imin);
 
+
+ostream& operator<<(ostream& os, const IR_target& t) {
+	if (t.target_located) {
+		os << "(" << t.angle << " degrees, " << t.distance << " centimeters)";
+	} else {
+		os << "(INVALID)";
+	}
+	return os;
+}
+
 //PID control kernel
 float PID_kernel(PID_IRRim& pid, float error, float position) {
 	float pTerm, dTerm, iTerm;
@@ -88,7 +98,9 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	sensors = new PVision[num_of_sensors];
 	sensor_count = num_of_sensors;
 	for (int i = 0; i < sensor_count; i++) {
+		#ifdef IR_RIM_DEBUG
 		cout << "Initializing sensor No. " << i + 1 << endl;
+		#endif
 		mux.selectChannel(PV_N(i));
 		if (!sensors[i].init()) {
 			cerr << "Sensor No. " << i + 1 << " not initialized correctly" << endl;
@@ -96,10 +108,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 		} else {
 			//TODO: Fill this place with apporiate logger: spdLogger, Boost logger etc..
 		}
+		#ifdef IR_RIM_DEBUG
 		cout << "Sensor No. " << i + 1 << " done." << endl;
+		#endif
 	}
 	servo.calibrate();
+	#ifdef IR_RIM_DEBUG
 	cout << "Servo calibration complete" << endl;
+	#endif
 	servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 	servo.move_to(0);
 
@@ -135,25 +151,33 @@ void IRRim::seek() {
 			servo_current_position = current_upper_bound;
 			if (current_lower_bound > 0) current_lower_bound -= 10;
 			if (current_lower_bound < 0) current_lower_bound = 0;
+			#ifdef IR_RIM_DEBUG
 			cout << "Moving to " << int(current_upper_bound) << endl;
+			#endif
 		} else {
 			servo_current_position = current_lower_bound;
 			if (current_upper_bound < 180) current_upper_bound += 10;
 			if (current_upper_bound > 180) current_upper_bound = 180;
+			#ifdef IR_RIM_DEBUG
 			cout << "Moving to " << int(current_lower_bound) << endl;
+			#endif
 		}
 	}
 	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
-		cout << "Saw a target on front, entering follow mode" << endl;
 		servo_current_position = (int)servo.current_position();
+		#ifdef IR_RIM_DEBUG
+		cout << "Saw a target on front, entering follow mode" << endl;
 		cout << "Servo redirecting to " << int(servo_current_position) << endl;
+		#endif
 		is_seeking = false;
 		current_active_pair = IRSensorPairFront;
 		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
 	} else if (read_IR(IRSensorPairBack) != IRReadResultLost) {
-		cout << "Saw a target on back, entering follow mode" << endl;
 		servo_current_position = (int)servo.current_position();
+		#ifdef IR_RIM_DEBUG
+		cout << "Saw a target on back, entering follow mode" << endl;
 		cout << "Servo redirecting to " << int(servo_current_position) << endl;
+		#endif
 		is_seeking = false;
 		current_active_pair = IRSensorPairBack;
 		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
@@ -190,7 +214,9 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			}
 			// timespec diff time_diff(tmp, target_last_seen);
 			if (diff.tv_sec != 0 || diff.tv_nsec >= 50000000) {
+				#ifdef IR_RIM_DEBUG
 				cout << "Target lost, going back to seeking" << endl;
+				#endif
 				is_seeking = true;
 				current_active_pair = IRSensorPairInvalid;
 				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
@@ -198,9 +224,11 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			}
 			return dummy_target;
 		case IRReadResultBlobOnLeft:
-			cout << "IR is on left" << endl;
 			middle_point = -left_avg.X;
+			#ifdef IR_RIM_DEBUG
+			cout << "IR is on left" << endl;
 			cout << "Left middle_point: " << middle_point<<endl;
+			#endif
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
@@ -208,9 +236,11 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			new_target.distance = -1.0f;
 			break;
 		case IRReadResultBlobOnRight:
-			cout << "IR is on right" << endl;
 			middle_point = FULL_HORIZONTAL - right_avg.X;
+			#ifdef IR_RIM_DEBUG
+			cout << "IR is on right" << endl;
 			cout << "Right middle_point: " << middle_point << endl;
+			#endif
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
@@ -218,16 +248,22 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			new_target.distance = -1.0f;
 			break;
 		case IRReadResultMiddle:
+			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
+			middle_point = FULL_HORIZONTAL - right_avg.X - left_avg.X;
+			#ifdef IR_RIM_DEBUG
 			cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
-			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
 			cout << "Target location: " << target_location << endl;
-			middle_point = FULL_HORIZONTAL - right_avg.X - left_avg.X;
 			cout << "middle_point: " << middle_point << endl;
+			#endif
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			new_target.angle = (uint16_t)servo.current_position();
 			new_target.distance = - target_location.z;
 		break;
+	}
+
+	if (following_pair == IRSensorPairBack) {
+		new_target.angle += 180;
 	}
 
 	if (middle_point > 100) {
@@ -245,7 +281,9 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	} else if (following_pair == IRSensorPairBack) {
 		correct = int(lround(PID_kernel(pid_back, middle_err, middle_point)));
 	}
+	#ifdef IR_RIM_DEBUG
 	cout << "Correction is: " << correct << endl;
+	#endif
 	if (correct > 1) {
 		correct = correct - 1;
 	} else if (correct < -1) {
@@ -270,17 +308,69 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	switch (pair) {
 		case IRSensorPairFront:
 			mux.selectChannel(PV_N(0));
-			result1 = sensors[0].readBlob();
+			try {
+				result1 = sensors[0].readBlob();
+			} catch (naughty_exception e) {
+				switch (e) {
+					case naughty_exception_PVisionReadFail:
+					case naughty_exception_PVisionWriteFail:
+					case naughty_exception_MuxWriteFail:
+					case naughty_exception_I2CError:
+						cerr << " sensor No. 0 error" << endl;
+					default:
+					break;
+					// throw e;
+				}
+			}
 			mux.selectChannel(PV_N(1));
-			result2 = sensors[1].readBlob();
+			try {
+				result2 = sensors[1].readBlob();
+			} catch (naughty_exception e) {
+				switch (e) {
+					case naughty_exception_PVisionReadFail:
+					case naughty_exception_PVisionWriteFail:
+					case naughty_exception_MuxWriteFail:
+					case naughty_exception_I2CError:
+						cerr << " sensor No. 1 error" << endl;
+					default:
+					break;
+					// throw e;
+				}
+			}
 			pv1 = &(sensors[0]);
 			pv2 = &(sensors[1]);
 		break;
 		case IRSensorPairBack:
 			mux.selectChannel(PV_N(2));
-			result1 = sensors[2].readBlob();
+			try {
+				result1 = sensors[2].readBlob();
+			} catch (naughty_exception e) {
+				switch (e) {
+					case naughty_exception_PVisionReadFail:
+					case naughty_exception_PVisionWriteFail:
+					case naughty_exception_MuxWriteFail:
+					case naughty_exception_I2CError:
+						cerr << " sensor No. 2 error" << endl;
+					default:
+					break;
+					// throw e;
+				}
+			}
 			mux.selectChannel(PV_N(3));
-			result2 = sensors[3].readBlob();
+			try {
+				result2 = sensors[3].readBlob();
+			} catch (naughty_exception e) {
+				switch (e) {
+					case naughty_exception_PVisionReadFail:
+					case naughty_exception_PVisionWriteFail:
+					case naughty_exception_MuxWriteFail:
+					case naughty_exception_I2CError:
+						cerr << " sensor No. 3 error" << endl;
+					default:
+					break;
+					// throw e;
+				}
+			}
 			pv1 = &(sensors[2]);
 			pv2 = &(sensors[3]);
 		break;
