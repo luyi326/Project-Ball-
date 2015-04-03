@@ -49,7 +49,7 @@ int main (int argc, char* argv[]) {
     motorPair->setBias(bias);
 
     try {
-        rim = new IRRim(2, EHRPWM1B, GPIO_48, AIN0);
+        rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
     } catch (naughty_exception ex) {
         if (ex == naughty_exception_PVisionWriteFail) {
             cerr << "One or more IR sensors are malfunctioning, exiting" << endl;

@@ -26,7 +26,8 @@ enum IRRimState {
 
 enum IRSensorPair {
 	IRSensorPairFront,
-	IRSensorPairBack
+	IRSensorPairBack,
+	IRSensorPairInvalid
 };
 
 enum IRReadResult {
@@ -44,9 +45,34 @@ typedef struct {
 	float pGain; // proportional gain
 	float dGain; // derivative gain
 
-}PID_IRRim;
+} PID_IRRim;
+
+/**
+ * @brief Target information
+ *
+ * @param target_located 	Indicate if this is a package containing valid target information, will be false
+ *                       	if no target is seen within vision
+ * @param angle 			angle of target relatvie to the ball, 0-360
+ * @param distance 			distance of the target from the ball in centimeters, if negative, means a distance
+ *                    		is not yet available (when following is still calculating)
+ */
+typedef struct {
+	bool target_located;
+	uint16_t angle; //clockwise, up front is 0 degrees
+	float distance; // distance in cm
+} IR_target;
 
 
+/**
+ * @brief [brief description]
+ * @details [long description]
+ *
+ * @param num_of_sensors [description]
+ * @param servoPin [description]
+ * @param muxResetPin [description]
+ * @param feedbackPin [description]
+ * @return [description]
+ */
 class IRRim {
 public:
 	/**
@@ -69,7 +95,7 @@ public:
 	 * @brief Update timestamp and do stuff
 	 * @details [long description]
 	 */
-	void run();
+	IR_target run();
 
 	IRReadResult read_IR(IRSensorPair pair);
 	IRReadResult read_IR(IRSensorPair pair, Blob* left_avg, Blob* right_avg);
@@ -80,6 +106,7 @@ private:
 	BlackServo servo;
 	uint8_t sensor_count;
 	IRRimState state;
+	IRSensorPair current_active_pair;
 	timespec target_last_seen;
 	int current_iteration;
 	int current_lower_bound;
@@ -88,6 +115,7 @@ private:
 	uint8_t servo_current_position;
 	bool is_seeking;
 	bool seeking_is_upwared;
+	IR_target dummy_target;
 
 	const vec o_left;
 	const vec o_right;
@@ -96,7 +124,7 @@ private:
 	void nextSensor();
 	void select(uint8_t num);
 	void seek();
-	void follow();
+	IR_target follow(IRSensorPair);
 	void reverse();
 
 	inline void validateBlob(uint8_t index_left, uint8_t index_right);

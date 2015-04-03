@@ -23,7 +23,7 @@
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
 
-#define SERVO_SEEK_TOLERANCE BLACK_SERVO_DEFAULT_TOLERANCE
+#define SERVO_SEEK_TOLERANCE 0.05f
 #define SERVO_FOLLOW_TOLERANCE 0.10f
 
 
@@ -54,9 +54,8 @@ void PID_set(PID_IRRim& PID_speed, float ig,float pg,float dg, float imax, float
 
 }
 
-static PID_IRRim pid_rim;
-
-
+static PID_IRRim pid_front;
+static PID_IRRim pid_back;
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName feedbackPin) :
@@ -64,12 +63,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	servo(servoPin, feedbackPin),
 	sensor_count(0),
 	state(IRRimState_seeking),
+	current_active_pair(IRSensorPairInvalid),
 	current_iteration(0),
 	current_lower_bound(0),
 	current_upper_bound(180),
 	servo_current_position(0),
 	is_seeking(true),
 	seeking_is_upwared(true),
+	dummy_target({false, 0, 0.0f}),
 	o_left(-HALF_D_SENSOR, 0, 0),
 	o_right(HALF_D_SENSOR, 0, 0),
 	o_left_m_right(-FULL_D_SENSOR, 0, 0)
@@ -80,7 +81,8 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	}
 
 	//set PID seed
-	PID_set(pid_rim,0.5,1.0f/100,1.0f/100,3,0);
+	PID_set(pid_front, 0.5, 1.0f / 40, 1.0f / 40, 3, 0);
+	PID_set(pid_back, 0.5, 1.0f / 40, 1.0f / 40, 3, 0);
 
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];
@@ -117,11 +119,12 @@ void IRRim::reset() {
 	mux.reset();
 }
 
-void IRRim::run() {
+IR_target IRRim::run() {
 	if (is_seeking) {
 		seek();
+		return dummy_target;
 	} else {
-		follow();
+		return follow(current_active_pair);
 	}
 }
 
@@ -141,24 +144,38 @@ void IRRim::seek() {
 		}
 	}
 	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
-		cout << "Saw a target, entering follow mode" << endl;
+		cout << "Saw a target on front, entering follow mode" << endl;
 		servo_current_position = (int)servo.current_position();
 		cout << "Servo redirecting to " << int(servo_current_position) << endl;
 		is_seeking = false;
+		current_active_pair = IRSensorPairFront;
+		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
+	} else if (read_IR(IRSensorPairBack) != IRReadResultLost) {
+		cout << "Saw a target on back, entering follow mode" << endl;
+		servo_current_position = (int)servo.current_position();
+		cout << "Servo redirecting to " << int(servo_current_position) << endl;
+		is_seeking = false;
+		current_active_pair = IRSensorPairBack;
 		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
 	}
 	servo.move_to(servo_current_position);
 }
 
 // static int lostTargetCount = 0;
-void IRRim::follow() {
+IR_target IRRim::follow(IRSensorPair following_pair) {
+	if (following_pair == IRSensorPairInvalid) {
+		cerr << " active sensor pair not selected, fatal error" << endl;
+		exit(1);
+	}
 	//experimental code for PID control start
 	//step1 get camera position
 	Blob left_avg, right_avg;
-	IRReadResult ir_state = read_IR(IRSensorPairFront, &left_avg, &right_avg);
+	IRReadResult ir_state = read_IR(following_pair, &left_avg, &right_avg);
 	//step2 calculate camera values
 	int middle_point = 0;
 	int middle_err = 0;
+	IR_target new_target;
+	new_target.target_located = true;
 	switch (ir_state) {
 		case IRReadResultLost:
 			timespec tmp;
@@ -172,99 +189,78 @@ void IRRim::follow() {
 				diff.tv_nsec = tmp.tv_nsec - target_last_seen.tv_nsec;
 			}
 			// timespec diff time_diff(tmp, target_last_seen);
-			if (tmp.tv_sec != 0 || tmp.tv_nsec >= 800000000) {
+			if (diff.tv_sec != 0 || diff.tv_nsec >= 50000000) {
 				cout << "Target lost, going back to seeking" << endl;
 				is_seeking = true;
+				current_active_pair = IRSensorPairInvalid;
 				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 				current_lower_bound = current_upper_bound = servo_current_position;
 			}
-			break;
+			return dummy_target;
 		case IRReadResultBlobOnLeft:
 			cout << "IR is on left" << endl;
-			middle_point = - (FULL_HORIZONTAL - left_avg.X);
+			middle_point = -left_avg.X;
 			cout << "Left middle_point: " << middle_point<<endl;
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
+			new_target.angle = (uint16_t)servo.current_position();
+			new_target.distance = -1.0f;
 			break;
 		case IRReadResultBlobOnRight:
 			cout << "IR is on right" << endl;
-			middle_point = right_avg.X;
+			middle_point = FULL_HORIZONTAL - right_avg.X;
 			cout << "Right middle_point: " << middle_point << endl;
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
+			new_target.angle = (uint16_t)servo.current_position();
+			new_target.distance = -1.0f;
 			break;
 		case IRReadResultMiddle:
 			cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
 			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
 			cout << "Target location: " << target_location << endl;
-			middle_point = right_avg.X - (FULL_HORIZONTAL - left_avg.X);
+			middle_point = FULL_HORIZONTAL - right_avg.X - left_avg.X;
 			cout << "middle_point: " << middle_point << endl;
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
+			new_target.angle = (uint16_t)servo.current_position();
+			new_target.distance = - target_location.z;
 		break;
 	}
 
-	if (middle_point > 150) {
-		middle_err = middle_point - 150;
-	} else if (middle_point < -150) {
-		middle_err = middle_point + 150;
+	if (middle_point > 100) {
+		middle_err = middle_point - 100;
+	} else if (middle_point < -100) {
+		middle_err = middle_point + 100;
 	} else {
 		middle_err = 0;
-		return;
+		return new_target;
 	}
 	//step3 put value and desire posi tion into PID
-	int correct = int(lround(PID_kernel(pid_rim, middle_err, middle_point)));
+	int correct = 0;
+	if (following_pair == IRSensorPairFront) {
+		correct = int(lround(PID_kernel(pid_front, middle_err, middle_point)));
+	} else if (following_pair == IRSensorPairBack) {
+		correct = int(lround(PID_kernel(pid_back, middle_err, middle_point)));
+	}
 	cout << "Correction is: " << correct << endl;
-	// if (correct > 3) {
-	// 	correct = correct - 3;
-	// } else if (correct < -3) {
-	// 	correct = correct + 3;
-	// } else {
-	// 	correct = 0;
-	// 	return;
-	// }
-	servo_current_position = (int)servo.current_position() + correct;
+	if (correct > 1) {
+		correct = correct - 1;
+	} else if (correct < -1) {
+		correct = correct + 1;
+	} else {
+		correct = 0;
+	}
+	servo_current_position = (int)servo.current_position() - correct;
 	// servo_current_position = (int)servo.current_position();
 	//add error output to servo
 	if (servo_current_position < 0) servo_current_position = 0;
 	if (servo_current_position > 180) servo_current_position = 180;
 	servo.move_to(servo_current_position);
 
-
-
-	//experimental code for PID control end
-
-
-	// servo.move_to(servo_current_position);
-	// IRReadResult ir_state = read_IR(IRSensorPairFront);
-	// switch (ir_state) {
-	// 	case IRReadResultLost:
-	// 		cout << "Target lost, going back to seeking" << endl;
-	// 		is_seeking = true;
-	// 		current_lower_bound = current_upper_bound = servo_current_position;
-	// 		break;
-	// 	case IRReadResultBlobOnLeft:
-	// 		cout << "IR is on left" << endl;
-	// 		servo_current_position -= 1;
-	// 		cout << "Servo moving clockwise" << endl;
-	// 		// exit(0);
-	// 		break;
-	// 	case IRReadResultBlobOnRight:
-	// 		cout << "IR is on right" << endl;
-	// 		servo_current_position += 1;
-	// 		cout << "Servo moving counterclockwise" << endl;
-	// 		// exit(0);
-	// 		break;
-	// 	case IRReadResultMiddle:
-	// 		cout << "IR is in the middle" << endl;
-	// 		cout << "Mid point: " << calculate_target_coordinate([0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
-	// 	break;
-	// }
-	// if (servo_current_position < 0) servo_current_position = 0;
-	// if (servo_current_position > 180) servo_current_position = 180;
-	// servo.move_to(servo_current_position);
+	return new_target;
 }
 
 IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg) {
@@ -288,6 +284,9 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 			pv1 = &(sensors[2]);
 			pv2 = &(sensors[3]);
 		break;
+		case IRSensorPairInvalid:
+			cerr << "Trying to read IR data from invalid sensor pair" << endl;
+			return IRReadResultLost;
 	}
 
 	// BlobCluster* normalized_result = normalize(result1, result2, pv1, pv2);
@@ -307,12 +306,12 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 		if (Blob_is_valid(left_avg) && Blob_is_valid(right_avg)) {
 			//When Blob1 is in vision of both left and right cameras, if the Blobs are on edge of the cameras, location of the
 			//blob will still be recognized as not in the middle (left or right).
-			if (left_avg.X < LEFT_QUARTER_HORIZONTAL && right_avg.X < LEFT_QUARTER_HORIZONTAL) {
-				return IRReadResultBlobOnLeft;
-			}
-			if (left_avg.X > RIGHT_QUARTER_HORIZONTAL && right_avg.X > RIGHT_QUARTER_HORIZONTAL) {
-				return IRReadResultBlobOnRight;
-			}
+			// if (left_avg.X < LEFT_QUARTER_HORIZONTAL && right_avg.X < LEFT_QUARTER_HORIZONTAL) {
+			// 	return IRReadResultBlobOnLeft;
+			// }
+			// if (left_avg.X > RIGHT_QUARTER_HORIZONTAL && right_avg.X > RIGHT_QUARTER_HORIZONTAL) {
+			// 	return IRReadResultBlobOnRight;
+			// }
 			return IRReadResultMiddle;
 		} else if (Blob_is_valid(left_avg)) {
 			return IRReadResultBlobOnLeft;
