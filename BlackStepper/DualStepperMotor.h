@@ -23,6 +23,8 @@ public:
 
 	void moveForward(uint64_t speed);
 	void moveBackward(uint64_t speed);
+	void leftSpin(uint64_t speed);
+	void rightSpin(uint64_t speed);
 	void setAcceleration(uint16_t acceration_step);
 	void run();
 	void setBias(float bias);
