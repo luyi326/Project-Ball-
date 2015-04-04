@@ -11,6 +11,8 @@
 #define IRRIM_RETRACK_INTERVAL (20000)
 #define SERVO_STEP (20)
 
+#define PVISION_MAX_ATTEMPT (5)
+
 #define FULL_HORIZONTAL (1000)
 #define FULL_VERTICAL (750)
 #define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
@@ -81,6 +83,7 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	is_seeking(true),
 	seeking_is_upwared(true),
 	dummy_target({false, 0, 0.0f}),
+	last_target({false, 0, 0.0f}),
 	o_left(-HALF_D_SENSOR, 0, 0),
 	o_right(HALF_D_SENSOR, 0, 0),
 	o_left_m_right(-FULL_D_SENSOR, 0, 0)
@@ -97,20 +100,28 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];
 	sensor_count = num_of_sensors;
-	for (int i = 0; i < sensor_count; i++) {
-		#ifdef IR_RIM_DEBUG
-		cout << "Initializing sensor No. " << i + 1 << endl;
-		#endif
-		mux.selectChannel(PV_N(i));
-		if (!sensors[i].init()) {
-			cerr << "Sensor No. " << i + 1 << " not initialized correctly" << endl;
-			throw naughty_exception_PVisionWriteFail;
-		} else {
-			//TODO: Fill this place with apporiate logger: spdLogger, Boost logger etc..
+	bool PVision_inited = false;
+	uint8_t PVision_init_attempt = 0;
+	while (PVision_init_attempt < PVISION_MAX_ATTEMPT && !PVision_inited) {
+		mux.reset();
+		for (int i = 0; i < sensor_count; i++) {
+			#ifdef IR_RIM_DEBUG
+			cout << "Initializing sensor No. " << i + 1 << endl;
+			#endif
+			mux.selectChannel(PV_N(i));
+			if (!sensors[i].init()) {
+				cerr << "Sensor No. " << i + 1 << " not initialized correctly" << endl;
+				continue;
+			}
+			#ifdef IR_RIM_DEBUG
+			cout << "Sensor No. " << i + 1 << " done." << endl;
+			#endif
 		}
-		#ifdef IR_RIM_DEBUG
-		cout << "Sensor No. " << i + 1 << " done." << endl;
-		#endif
+		PVision_inited = true;
+	}
+	if (!PVision_inited) {
+		cerr << "Attempted " << PVISION_MAX_ATTEMPT << " times to initialize PVision and failed" << endl;
+		throw naughty_exception_PVisionInitFail;
 	}
 	servo.calibrate();
 	#ifdef IR_RIM_DEBUG
@@ -221,8 +232,9 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 				current_active_pair = IRSensorPairInvalid;
 				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 				current_lower_bound = current_upper_bound = servo_current_position;
+				return dummy_target;
 			}
-			return dummy_target;
+			return last_target;
 		case IRReadResultBlobOnLeft:
 			middle_point = -left_avg.X;
 			#ifdef IR_RIM_DEBUG
@@ -265,6 +277,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	if (following_pair == IRSensorPairBack) {
 		new_target.angle += 180;
 	}
+
+	last_target = new_target;
 
 	if (middle_point > 100) {
 		middle_err = middle_point - 100;
@@ -429,48 +443,6 @@ inline void validateBlob(uint8_t index_left, uint8_t index_right) {
 
 }
 
-// inline timespec IRRim::time_diff(timespec a, timespec b) {
-// 	struct timespec r;
-// 	time_t rs = a.tv_sec;
-// 	time_t bs = b.tv_sec;
-// 	int ns = a.tv_nsec - b.tv_nsec;
-// 	int rns = ns;
-
-// 	if (ns < 0)
-// 	{
-// 		rns = ns + 1000000000;
-// 		if (rs == TYPE_MINIMUM (time_t))
-// 		{
-// 		if (bs <= 0)
-// 			goto low_overflow;
-// 			bs--;
-// 		}
-// 		else
-// 			rs--;
-// 	}
-
-// 	if (INT_SUBTRACT_OVERFLOW (rs, bs))
-// 	{
-// 		if (rs < 0)
-// 		{
-// 			low_overflow:
-// 			rs = TYPE_MINIMUM (time_t);
-// 			rns = 0;
-// 		}
-// 		else
-// 		{
-// 			rs = TYPE_MAXIMUM (time_t);
-// 			rns = 999999999;
-// 		}
-// 	}
-// 	else
-// 		rs -= bs;
-
-// 	r.tv_sec = rs;
-// 	r.tv_nsec = rns;
-// 	return r;
-// }
-
 //Z positioning algos starts here
 
 inline vec IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
@@ -499,8 +471,8 @@ inline vec IRRim::calculate_target_coordinate(int left_x, int left_y, int right_
 
 inline vec IRRim::get_directional_vec(int x, int y) {
 	vec result;
-	result.x =((float)(x - HALF_HORIZONTAL)) * TAN_16_5 / HALF_HORIZONTAL;
-	result.y =((float)(y - HALF_VERTICAL)) * TAN_11_5 / HALF_VERTICAL;
+	result.x = ((float)(x - HALF_HORIZONTAL)) * TAN_16_5 / HALF_HORIZONTAL;
+	result.y = ((float)(y - HALF_VERTICAL)) * TAN_11_5 / HALF_VERTICAL;
 	result.z = 1.0f;
 	return result;
 }

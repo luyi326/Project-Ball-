@@ -2,6 +2,7 @@
 #define NAUGHTY_EXCEPTION_H
 
 enum naughty_exception {
+	naughty_exception_PVisionInitFail,
 	naughty_exception_PVisionReadFail,
 	naughty_exception_PVisionWriteFail,
 	naughty_exception_MuxWriteFail,

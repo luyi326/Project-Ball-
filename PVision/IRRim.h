@@ -116,6 +116,7 @@ private:
 	bool is_seeking;
 	bool seeking_is_upwared;
 	IR_target dummy_target;
+	IR_target last_target;
 
 	const vec o_left;
 	const vec o_right;

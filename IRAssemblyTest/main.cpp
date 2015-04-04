@@ -31,7 +31,7 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_26, EHRPWM2A, GPIO_44, EHRPWM2B);
+    motorPair = new DualStepperMotor(GPIO_72, EHRPWM2A, GPIO_73, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 170;
@@ -51,7 +51,7 @@ int main (int argc, char* argv[]) {
     try {
         rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
     } catch (naughty_exception ex) {
-        if (ex == naughty_exception_PVisionWriteFail) {
+        if (ex == naughty_exception_PVisionInitFail) {
             cerr << "One or more IR sensors are malfunctioning, exiting" << endl;
             exit(1);
         }
