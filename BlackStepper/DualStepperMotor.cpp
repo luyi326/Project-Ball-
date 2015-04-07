@@ -16,34 +16,31 @@ DualStepperMotor::DualStepperMotor(
 }
 
 DualStepperMotor::~DualStepperMotor() {
-	setAcceleration(20);
-	moveForward(10000);
-	while (!targetSpeedReached()) {
-		run();
-	}
+	leftStepper.halt();
+	rightStepper.halt();
 }
 
 //Public functions
 
 
 void DualStepperMotor::moveForward(uint64_t speed) {
-	leftStepper.run(1, speed);
-	rightStepper.run(0, speed);
+	leftStepper.run(0, speed);
+	rightStepper.run(1, speed);
 }
 
 void DualStepperMotor::moveBackward(uint64_t speed) {
-	leftStepper.run(0, speed);
-	rightStepper.run(1, speed);
-}
-
-void DualStepperMotor::leftSpin(uint64_t speed) {
-	leftStepper.run(0, speed);
+	leftStepper.run(1, speed);
 	rightStepper.run(0, speed);
 }
 
-void DualStepperMotor::rightSpin(uint64_t speed) {
+void DualStepperMotor::leftSpin(uint64_t speed) {
 	leftStepper.run(1, speed);
 	rightStepper.run(1, speed);
+}
+
+void DualStepperMotor::rightSpin(uint64_t speed) {
+	leftStepper.run(0, speed);
+	rightStepper.run(0, speed);
 }
 
 

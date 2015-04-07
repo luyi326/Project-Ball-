@@ -40,6 +40,7 @@ public:
 	void run(bool direction, uint64_t speed);
 	void run();
 	void stop();
+	void halt();
 	void setAcceleration(uint16_t acceration_step);
 	void setBias(float bias);
 

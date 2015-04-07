@@ -31,17 +31,11 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_72, EHRPWM2A, GPIO_73, EHRPWM2B);
+    motorPair = new DualStepperMotor(GPIO_27, EHRPWM2A, GPIO_47, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
-    uint64_t speed = 170;
-    // if (argc >= 2) {
-    //     speed = atoi(argv[1]);
-    // }
-    float bias = 0.2;
-    // if (argc >= 3) {
-    //     bias = atof(argv[2]);
-    // }
+    uint64_t speed = 100000;
+    float bias = 0.0f;
 
     motorPair->setAcceleration(100);
     cout << "running at speed " << speed <<endl;
@@ -68,9 +62,48 @@ int main (int argc, char* argv[]) {
         rim->run();
         rim->run();
         rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
+        rim->run();
         IR_target target = rim->run();
-        if (target.target_located) {
+        bool left_or_right = true;
+        uint16_t angle_bias = 0;
+        // TODO: Need PID control???
+        if (target.distance < -2) target.distance = -target.distance;
+        if (target.target_located && target.distance > 0) {
             cout << target << endl;
+            if (target.angle >= 0 && target.angle < 180) {
+                //turn left?
+                left_or_right = true;
+                angle_bias = target.angle;
+            } else {
+                //turn right?
+                left_or_right = false;
+                angle_bias = 360 - target.angle;
+            }
+            if (target.distance < 10) {
+                cout << "target is too close! abort!" << endl;
+                delete motorPair;
+                delete rim;
+                exit(0);
+            } else {
+                motorPair->moveForward(uint64_t(500 - (target.distance - 60) * 7.5));
+                cout << "Setting speed to " << uint64_t(500 - (target.distance - 60) * 7.5) << endl;
+                // motorPair->setBias((~left_or_right) * angle_bias / 180.0f);
+                 motorPair->setBias(0.9);
+                cout << "Setting bias to " << (~left_or_right) * angle_bias / 180.0f << endl;
+            }
         }
         // usleep(10000);
 

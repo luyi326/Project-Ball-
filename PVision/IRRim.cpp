@@ -6,7 +6,7 @@
 // #define IR_RIM_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
-#define PV_N(n) (1 << (n+2))
+#define PV_N(n) (1 << (n+0))
 #define IRRIM_SEEK_INTERVAL (600000000) //interval is in nanoseconds
 #define IRRIM_RETRACK_INTERVAL (20000)
 #define SERVO_STEP (20)
@@ -94,8 +94,8 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	}
 
 	//set PID seed
-	PID_set(pid_front, 0.5, 1.0f / 40, 1.0f / 40, 3, 0);
-	PID_set(pid_back, 0.5, 1.0f / 40, 1.0f / 40, 3, 0);
+	PID_set(pid_front, 0.5, 1.0f / 40, 1.0f / 80, 3, 0);
+	PID_set(pid_back, 0.5, 1.0f / 40, 1.0f / 80, 3, 0);
 
 	//Initialize all IRs and check status
 	sensors = new PVision[num_of_sensors];

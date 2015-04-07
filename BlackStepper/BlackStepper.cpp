@@ -49,6 +49,10 @@ void BlackStepper::stop() {
 	setMovement(0, 0);
 }
 
+void BlackStepper::halt() {
+	setGPIOAndPWM(_current_direction, FREQ_TO_PERIOD_MICRO(PERIOD_MAX));
+}
+
 void BlackStepper::setAcceleration(uint16_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }

@@ -26,7 +26,7 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_72, EHRPWM2A, GPIO_73, EHRPWM2B);
+    motorPair = new DualStepperMotor(GPIO_27, EHRPWM2A, GPIO_47, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 170;
@@ -37,7 +37,7 @@ int main (int argc, char* argv[]) {
     if (argc >= 3) {
         bias = atof(argv[2]);
     }
-    motorPair->setAcceleration(100);
+    motorPair->setAcceleration(300);
     cout << "running at speed " << speed <<endl;
     motorPair->moveForward(speed);
     motorPair->setBias(bias);

@@ -14,6 +14,7 @@ STEPPER_DIR = ../BlackStepper/
 SERVO_DIR = ../BlackServo/
 PIXDIR = ../PVision/
 I2CDIR = ../I2CBase/
+PIDDIR = ../PID/
 
 BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackADC.o
 BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackADC.h
@@ -21,12 +22,15 @@ BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h 
 MOTOR_OBJ = BlackServo.o BlackStepper.o DualStepperMotor.o
 MOTOR_HEADER = $(STEPPER_DIR)BlackStepper.h $(SERVO_DIR)BlackServo.h $(STEPPER_DIR)DualStepperMotor.h
 
+PID_OBJ = PID.o
+PID_HEADER = $(PIDDIR)PID.h
+
 I2C_OBJ = I2CBase.o PCA9548A.o PVision.o IRRim.o vec.o BlobCompare.o
 I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)IRRim.h $(PIXDIR)vec.h $(PIXDIR)BlobCompare.h
 
 all: $(TARGET)
 
-$(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I2C_HEADER) $(I2C_OBJ)
+$(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I2C_HEADER) $(I2C_OBJ) $(PID_HEADER)
 	$(CC) $(CFLAGS) -o $(TARGET) main.cpp $(MOTOR_OBJ) $(BLACK_LIB_OBJ) $(I2C_OBJ)
 
 # Stepper. Servos and double steppers
@@ -54,6 +58,9 @@ vec.o: $(PIXDIR)vec.h
 
 BlobCompare.o: $(PIXDIR)BlobCompare.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)BlobCompare.cpp
+
+PID.o: $(PIDDIR)PID.h
+	$(CC) $(CFLAGS) -c $(PIDDIR)PID.cpp
 
 IRRim.o: $(I2C_HEADER) $(BLACK_LIB_HEADER) $(SERVO_DIR)BlackServo.h $(PIXDIR)BlobCompare.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)IRRim.cpp
