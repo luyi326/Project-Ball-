@@ -31,11 +31,11 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_27, EHRPWM2A, GPIO_47, EHRPWM2B);
+    motorPair = new DualStepperMotor(GPIO_15, EHRPWM0A, GPIO_47, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
     uint64_t speed = 100000;
-    float bias = 0.0f;
+    int bias = 0;
 
     motorPair->setAcceleration(100);
     cout << "running at speed " << speed <<endl;
@@ -100,9 +100,9 @@ int main (int argc, char* argv[]) {
             } else {
                 motorPair->moveForward(uint64_t(500 - (target.distance - 60) * 7.5));
                 cout << "Setting speed to " << uint64_t(500 - (target.distance - 60) * 7.5) << endl;
-                // motorPair->setBias((~left_or_right) * angle_bias / 180.0f);
-                 motorPair->setBias(0.9);
-                cout << "Setting bias to " << (~left_or_right) * angle_bias / 180.0f << endl;
+                motorPair->setBias((~left_or_right) * angle_bias / 1.80f);
+                 // motorPair->setBias(0.9);
+                cout << "Setting bias to " << (~left_or_right) * angle_bias / 1.8f << endl;
             }
         }
         // usleep(10000);
