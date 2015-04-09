@@ -7,6 +7,9 @@
 #include <ctime>
 using namespace BlackLib;
 
+#define PERIOD_MAX 10000
+#define PERIOD_MIN 170
+
 class BlackStepper {
 private:
 	BlackGPIO _direction;

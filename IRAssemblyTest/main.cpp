@@ -9,6 +9,7 @@
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackStepper/DualStepperMotor.h"
 #include "../PVision/IRRim.h"
+#include "../PID/PID.h"
 
 using namespace BlackLib;
 using namespace std;
@@ -51,6 +52,8 @@ int main (int argc, char* argv[]) {
         }
     }
 
+    PID pid_turn(0.5, 1.0f / 40, 1.0f / 80, 3, 0);
+
     while (1) {
         timespec t1;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
@@ -77,11 +80,13 @@ int main (int argc, char* argv[]) {
         rim->run();
         rim->run();
         IR_target target = rim->run();
-        bool left_or_right = true;
         uint16_t angle_bias = 0;
         // TODO: Need PID control???
         if (target.distance < -2) target.distance = -target.distance;
         if (target.target_located && target.distance > 0) {
+            bool left_or_right = true;
+            cout << "target aqquired" << endl;
+            motorPair->setAcceleration(100);
             cout << target << endl;
             if (target.angle >= 0 && target.angle < 180) {
                 //turn left?
@@ -92,6 +97,7 @@ int main (int argc, char* argv[]) {
                 left_or_right = false;
                 angle_bias = 360 - target.angle;
             }
+            cout << "angle bias is " << angle_bias << " to the " << (left_or_right?"left":"right") << endl;
             if (target.distance < 10) {
                 cout << "target is too close! abort!" << endl;
                 delete motorPair;
@@ -100,26 +106,38 @@ int main (int argc, char* argv[]) {
             } else {
                 motorPair->moveForward(uint64_t(500 - (target.distance - 60) * 7.5));
                 cout << "Setting speed to " << uint64_t(500 - (target.distance - 60) * 7.5) << endl;
-                motorPair->setBias((~left_or_right) * angle_bias / 1.80f);
+                int tmpBias = 0;
+                int middle_angle = 0;
+                if (left_or_right) {
+                    tmpBias = - int(angle_bias) / 1.80f;
+                    middle_angle = - int(angle_bias);
+                } else {
+                    tmpBias = int(angle_bias) / 1.80f; 
+                    middle_angle = int(angle_bias);
+                }
+                int middle_error = 0;
+                if (middle_angle > 10) {
+                    middle_error = middle_angle - 10;
+                } else if (middle_angle < -10) {
+                    middle_error = middle_angle + 10;
+                } else {
+                    middle_error = 0;
+                }
+                int correct = int(lround(pid_turn.kernel(middle_error, middle_angle)));
+                bias = tmpBias;
+                cout << "correction is " << correct << endl;
+                motorPair->setBias(tmpBias);
                  // motorPair->setBias(0.9);
-                cout << "Setting bias to " << (~left_or_right) * angle_bias / 1.8f << endl;
+                cout << "Setting bias to " << tmpBias << endl;
             }
+        } else {
+            cout << "target lost" << endl;
+            motorPair->setAcceleration(200);
+            motorPair->setBias(0);
+            motorPair->stop();
+
+
         }
-        // usleep(10000);
-
-
-        // timespec t2;
-        // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-
-        // timespec temp;
-        // if ((t2.tv_nsec-t1.tv_nsec)<0) {
-        //     temp.tv_sec = t2.tv_sec-t1.tv_sec-1;
-        //     temp.tv_nsec = 1000000000+t2.tv_nsec-t1.tv_nsec;
-        // } else {
-        //     temp.tv_sec = t2.tv_sec-t1.tv_sec;
-        //     temp.tv_nsec = t2.tv_nsec-t1.tv_nsec;
-        // }
-        // cout << temp.tv_sec << "." << temp.tv_nsec << endl;
     }
 
     delete motorPair;

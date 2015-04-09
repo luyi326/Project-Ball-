@@ -62,8 +62,8 @@ void DualStepperMotor::run() {
 }
 
 void DualStepperMotor::stop() {
-	leftStepper.run(1, 0);
-	rightStepper.run(0, 0);
+	leftStepper.stop();
+	rightStepper.stop();
 }
 
 bool DualStepperMotor::targetSpeedReached() {

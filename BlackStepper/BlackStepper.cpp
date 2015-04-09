@@ -5,14 +5,11 @@
 #include "BlackStepper.h"
 using namespace std;
 
-#define STEPPER_DEBUG
+// #define STEPPER_DEBUG
 
 #define STEP_INTERVAL 5000000
 // #define STEP_SIZE_FREQ 15
 #define DEFAULT_ACCEL_STEP 15
-
-#define PERIOD_MAX 10000
-#define PERIOD_MIN 170
 
 #define PERIOD_MICRO_TO_FREQ(period) ((uint32_t)(1000000/period))
 #define FREQ_TO_PERIOD_MICRO(freq) ((uint32_t)(1000000/freq))
@@ -49,7 +46,7 @@ void BlackStepper::run() {
 }
 
 void BlackStepper::stop() {
-	setMovement(0, 0);
+	setMovement(0, PERIOD_MAX);
 }
 
 void BlackStepper::halt() {
