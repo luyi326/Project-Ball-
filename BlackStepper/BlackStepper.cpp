@@ -5,7 +5,7 @@
 #include "BlackStepper.h"
 using namespace std;
 
-// #define STEPPER_DEBUG
+#define STEPPER_DEBUG
 
 #define STEP_INTERVAL 5000000
 // #define STEP_SIZE_FREQ 15
@@ -77,12 +77,24 @@ uint32_t BlackStepper::getSpeed() {
 bool BlackStepper::targetSpeedReached() {
 	return _speedReached;
 }
+
 uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
 int BlackStepper::getBias() {
 	return _turn_freq_bias;
+}
+
+int BlackStepper::freq_diff() {
+	int target_freq = (int)_target_freq;
+	int current_freq = (int)_current_freq;
+	if (_target_direction == _current_direction) {
+		return abs(target_freq - current_freq);
+	} else {
+		return abs(target_freq + current_freq);
+	}
+	return abs(target_freq + current_freq);
 }
 
 //Private functions

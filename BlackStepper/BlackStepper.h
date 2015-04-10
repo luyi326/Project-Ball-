@@ -52,7 +52,7 @@ public:
 	uint16_t getAcceleration();
 	int getBias();
 	bool targetSpeedReached();
-
+	int freq_diff();
 };
 
 #endif

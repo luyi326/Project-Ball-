@@ -109,10 +109,10 @@ int main (int argc, char* argv[]) {
                 int tmpBias = 0;
                 int middle_angle = 0;
                 if (left_or_right) {
-                    tmpBias = - int(angle_bias) / 1.80f;
+                    tmpBias = - int(angle_bias) / 0.036f;
                     middle_angle = - int(angle_bias);
                 } else {
-                    tmpBias = int(angle_bias) / 1.80f; 
+                    tmpBias = int(angle_bias) / 0.036f;
                     middle_angle = int(angle_bias);
                 }
                 int middle_error = 0;

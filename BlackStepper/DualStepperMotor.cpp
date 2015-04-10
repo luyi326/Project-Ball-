@@ -43,10 +43,26 @@ void DualStepperMotor::rightSpin(uint32_t speed) {
 	rightStepper.run(1, speed);
 }
 
+/**
+ * @brief Make the steppers reach same speed at the same time
+ */
+// #define MATCHING_ACCEL
 
 void DualStepperMotor::setAcceleration(uint16_t acceration_step) {
+	#ifdef MATCHING_ACCEL
+	int left_freq_diff = leftStepper.freq_diff();
+	int right_freq_diff = rightStepper.freq_diff();
+	if (left_freq_diff < right_freq_diff) {
+		rightStepper.setAcceleration(acceration_step);
+
+	} else {
+		leftStepper.setAcceleration(acceration_step);
+
+	}
+	#else
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
+	#endif
 }
 
 void DualStepperMotor::setBias(int bias) {
