@@ -16,60 +16,50 @@ DualStepperMotor::DualStepperMotor(
 }
 
 DualStepperMotor::~DualStepperMotor() {
-	leftStepper.halt();
-	rightStepper.halt();
+	setAcceleration(20);
+	moveForward(10000);
+	while (!targetSpeedReached()) {
+		run();
+	}
 }
 
 //Public functions
 
 
-void DualStepperMotor::moveForward(uint32_t speed) {
+void DualStepperMotor::moveForward(uint64_t speed) {
 	leftStepper.run(1, speed);
 	rightStepper.run(0, speed);
 }
 
-void DualStepperMotor::moveBackward(uint32_t speed) {
+void DualStepperMotor::moveBackward(uint64_t speed) {
 	leftStepper.run(0, speed);
 	rightStepper.run(1, speed);
 }
 
-void DualStepperMotor::leftSpin(uint32_t speed) {
+void DualStepperMotor::leftSpin(uint64_t speed) {
 	leftStepper.run(0, speed);
 	rightStepper.run(0, speed);
 }
 
-void DualStepperMotor::rightSpin(uint32_t speed) {
+void DualStepperMotor::rightSpin(uint64_t speed) {
 	leftStepper.run(1, speed);
 	rightStepper.run(1, speed);
 }
 
-/**
- * @brief Make the steppers reach same speed at the same time
- */
-// #define MATCHING_ACCEL
 
 void DualStepperMotor::setAcceleration(uint16_t acceration_step) {
-	#ifdef MATCHING_ACCEL
-	int left_freq_diff = leftStepper.freq_diff();
-	int right_freq_diff = rightStepper.freq_diff();
-	if (left_freq_diff < right_freq_diff) {
-		rightStepper.setAcceleration(acceration_step);
-
-	} else {
-		leftStepper.setAcceleration(acceration_step);
-
-	}
-	#else
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
-	#endif
 }
 
-void DualStepperMotor::setBias(int bias) {
-	// cout << "dual stepper setting bias" << endl;
+void DualStepperMotor::setBias(float bias) {
 	turn_bias = bias;
-	leftStepper.setBias(bias);
-	rightStepper.setBias(-bias);
+	leftStepper.setBias(-bias);
+	rightStepper.setBias(bias);
+	cout << "dualstepper::1 Set bias to " << bias << endl;
+	leftStepper.run();
+	rightStepper.run();
+	cout << "dualstepper::2 Set bias to " << bias << endl;
 }
 
 void DualStepperMotor::run() {

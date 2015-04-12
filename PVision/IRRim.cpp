@@ -155,6 +155,15 @@ IR_target IRRim::run() {
 	}
 }
 
+
+void IRRim::force_seek() {
+	if (is_seeking) return;
+	is_seeking = true;
+	current_active_pair = IRSensorPairInvalid;
+	servo.set_tolerance(SERVO_SEEK_TOLERANCE);
+	current_lower_bound = current_upper_bound = servo_current_position;
+}
+
 void IRRim::seek() {
 	servo.move_to(servo_current_position);
 	if (servo.target_position_reached()) {

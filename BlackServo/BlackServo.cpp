@@ -6,7 +6,7 @@ using namespace std;
 #define MAX_TIME_NEED_TO_ROTATE_US 1000000
 
 #define SERVO_PERIOD 20
-#define DUTY_MIN 2.5f
+#define DUTY_MIN 2.0f
 #define DUTY_MAX 12.0f
 #define DUTY_SPAN (DUTY_MAX - DUTY_MIN)
 

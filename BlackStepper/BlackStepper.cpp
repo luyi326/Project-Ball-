@@ -5,19 +5,19 @@
 #include "BlackStepper.h"
 using namespace std;
 
-#define STEPPER_DEBUG
+// #define STEPPER_DEBUG
 
 #define STEP_INTERVAL 5000000
 // #define STEP_SIZE_FREQ 15
 #define DEFAULT_ACCEL_STEP 15
 
-#define PERIOD_MICRO_TO_FREQ(period) ((uint32_t)(1000000/period))
-#define FREQ_TO_PERIOD_MICRO(freq) ((uint32_t)(1000000/freq))
+#define PERIOD_MAX 10000
+#define PERIOD_MIN 170
 
-#define FREQ_MIN PERIOD_MICRO_TO_FREQ(PERIOD_MAX) //100
-#define FREQ_MAX PERIOD_MICRO_TO_FREQ(PERIOD_MIN) //5882.35
+#define BIAS_MAX 0.98
 
-// #define BIAS_MAX 0.9
+#define PERIOD_MICRO_TO_FREQ(period) ((uint64_t)(1000000/period))
+#define FREQ_TO_PERIOD_MICRO(freq) ((uint64_t)(1000000/freq))
 
 //Public functions
 BlackStepper::BlackStepper(gpioName direction, pwmName frequency) : _direction(direction, output, SecureMode), _frequency(frequency) {
@@ -37,7 +37,7 @@ BlackStepper::~BlackStepper() {
 	usleep(200);
 }
 
-void BlackStepper::run(bool direction, uint32_t speed) {
+void BlackStepper::run(bool direction, uint64_t speed) {
 	setMovement(direction, speed);
 }
 
@@ -49,19 +49,17 @@ void BlackStepper::stop() {
 	setMovement(0, PERIOD_MAX);
 }
 
-void BlackStepper::halt() {
-	setGPIOAndPWM(_current_direction, FREQ_TO_PERIOD_MICRO(PERIOD_MAX));
-}
-
 void BlackStepper::setAcceleration(uint16_t acceration_step) {
 	_current_accelration_step = acceration_step;
 }
 
-void BlackStepper::setBias(int bias) {
-	// cout << "Setting bias " << endl;
-	#ifdef STEPPER_DEBUG
-	cout << "motor is biased at " << bias << endl;
-	#endif
+void BlackStepper::setBias(float bias) {
+	if (bias > BIAS_MAX) {
+		bias = BIAS_MAX;
+	}
+	if (bias < - BIAS_MAX) {
+		bias = - BIAS_MAX;
+	}
 	_turn_freq_bias = bias;
 }
 
@@ -70,63 +68,28 @@ bool BlackStepper::getDirection() {
 	return _current_direction;
 }
 
-uint32_t BlackStepper::getSpeed() {
+uint64_t BlackStepper::getSpeed() {
 	return _current_speed;
 }
 
 bool BlackStepper::targetSpeedReached() {
 	return _speedReached;
 }
-
 uint16_t BlackStepper::getAcceleration() {
 	return _current_accelration_step;
 }
 
-int BlackStepper::getBias() {
+float BlackStepper::getBias() {
 	return _turn_freq_bias;
 }
 
-int BlackStepper::freq_diff() {
-	int target_freq = (int)_target_freq;
-	int current_freq = (int)_current_freq;
-	if (_target_direction == _current_direction) {
-		return abs(target_freq - current_freq);
-	} else {
-		return abs(target_freq + current_freq);
-	}
-	return abs(target_freq + current_freq);
-}
-
 //Private functions
-void BlackStepper::setMovement(bool direction, uint32_t speed) {
+void BlackStepper::setMovement(bool direction, uint64_t speed) {
 	_target_direction = direction;
 	_target_speed = speed;
 	if (speed > PERIOD_MAX) speed = PERIOD_MAX;
 	if (speed < PERIOD_MIN) speed = PERIOD_MIN;
-	int signed_freq = (uint32_t)lround((double)PERIOD_MICRO_TO_FREQ(speed));
-	#ifdef STEPPER_DEBUG
-	cout << "Target freq " << signed_freq << " with direction " << direction << " and turn bias " << _turn_freq_bias << endl;
-	#endif
-	signed_freq += _turn_freq_bias;
-	#ifdef STEPPER_DEBUG
-	cout << "signed freq is now " << signed_freq << endl;
-	#endif
-	if (signed_freq < int(FREQ_MIN)) {
-		_target_direction = ~_target_direction;
-		signed_freq = 2 * FREQ_MIN - signed_freq;
-		#ifdef STEPPER_DEBUG
-		cout << "reverted signed freq is now " << signed_freq << endl;
-		#endif
-	}
-	if (signed_freq < 0) {
-		cerr << "freq less than 0" << endl;
-		exit(1);
-	}
-	_target_freq = signed_freq;
-	#ifdef STEPPER_DEBUG
-	cout << "real target freq " << _target_freq << " with direction " << _target_direction << " and turn bias " << _turn_freq_bias << endl;
-	#endif
-
+	_target_freq = (uint64_t)lround((double)PERIOD_MICRO_TO_FREQ(speed) * (1 + _turn_freq_bias));
 
 	_speedReached = 0;
 
@@ -142,9 +105,9 @@ void BlackStepper::setMovement(bool direction, uint32_t speed) {
 		#endif
 		int _cal_new_freq = (int)_current_freq;
 
-		uint32_t real_step = _current_accelration_step;
+		uint64_t real_step = _current_accelration_step;
 		if (_current_direction == _target_direction) {
-			real_step = std::min( ((uint32_t)std::abs(_cal_new_freq - _target_freq)), real_step);
+			real_step = std::min( ((uint64_t)std::abs(_cal_new_freq - _target_freq)), real_step);
 
 
 			// If the target is speed already reached, just return. UNLESS some other program is modifying the gpio
@@ -165,7 +128,7 @@ void BlackStepper::setMovement(bool direction, uint32_t speed) {
 		cout << "Current direction: " << _current_direction << ", current speed: " << _current_speed << endl;
 		#endif
 
-		if (_current_direction == _target_direction && (uint32_t)_cal_new_freq < _target_freq) {
+		if (_current_direction == _target_direction && (uint64_t)_cal_new_freq < _target_freq) {
 			_cal_new_freq += (int)real_step;
 		} else {
 			_cal_new_freq -= (int)real_step;
@@ -191,7 +154,7 @@ void BlackStepper::setMovement(bool direction, uint32_t speed) {
 		cout << "Step size: " << real_step << endl;
 		#endif
 
-		setGPIOAndPWM(_current_direction, (uint32_t)_cal_new_freq);
+		setGPIOAndPWM(_current_direction, (uint64_t)_cal_new_freq);
 
 		if (_target_direction == _current_direction && _target_speed == _current_speed) {
 			#ifdef STEPPER_DEBUG
@@ -223,7 +186,7 @@ inline bool BlackStepper::isLongEnough() {
 	return false;
 }
 
-inline void BlackStepper::setGPIOAndPWM(bool direction, uint32_t frequency) {
+inline void BlackStepper::setGPIOAndPWM(bool direction, uint64_t frequency) {
 	#ifdef STEPPER_DEBUG
 	cout << "Setting direction " << (digitalValue)direction << endl;
 	#endif

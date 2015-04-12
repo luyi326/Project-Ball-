@@ -97,6 +97,8 @@ public:
 	 */
 	IR_target run();
 
+	void force_seek();
+
 	IRReadResult read_IR(IRSensorPair pair);
 	IRReadResult read_IR(IRSensorPair pair, Blob* left_avg, Blob* right_avg);
 
