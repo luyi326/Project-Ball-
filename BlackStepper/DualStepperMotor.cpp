@@ -53,10 +53,6 @@ void DualStepperMotor::setBias(unsigned int bias) {
 	turn_bias = bias;
 	leftStepper.setBias(-bias);
 	rightStepper.setBias(bias);
-	// cout << "dualstepper::1 Set bias to " << bias << endl;
-	leftStepper.run();
-	rightStepper.run();
-	// cout << "dualstepper::2 Set bias to " << bias << endl;
 }
 
 void DualStepperMotor::run() {

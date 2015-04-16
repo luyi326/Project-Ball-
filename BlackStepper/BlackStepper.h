@@ -23,7 +23,7 @@ private:
 	unsigned int  _target_freq;
 	unsigned int _current_accelration_step;
 
-	unsigned int _turn_freq_bias;
+	int _turn_freq_bias;
 
 	bool _speedReached;
 
@@ -39,12 +39,12 @@ public:
 	void run();
 	void stop();
 	void setAcceleration(unsigned int acceration_step);
-	void setBias(unsigned int bias);
+	void setBias(int bias);
 
 	bool getDirection();
 	unsigned int getFrequency();
 	unsigned int getAcceleration();
-	unsigned int getBias();
+	int getBias();
 	bool targetSpeedReached();
 
 };
