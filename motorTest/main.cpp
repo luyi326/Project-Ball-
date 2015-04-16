@@ -1,30 +1,29 @@
 #include <iostream>
 #include <unistd.h>
+#include <stdlib.h>
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackGPIO.h"
-#include "../AccelStepper/AccelStepper.h"
+#include "../BlackStepper/BlackStepper.h"
 
 using namespace BlackLib;
 using namespace std;
 
 int main (int argc, char* argv[]) {
-    AccelStepper stepper(AccelStepper::DRIVER, GPIO_31, GPIO_48);
-    int pos = 3600;
-    float speed = 12000.0f;
+    BlackStepper stepper(GPIO_15, EHRPWM0A);
+    unsigned freq = 4000;
     if (argc == 2) {
-        speed = atof(argv[1]);
+        freq = atoi(argv[1]);
     }
-    cout << "Speed: " << speed << endl;
-    stepper.setMaxSpeed(speed);
-    stepper.setAcceleration(speed / 3);
-    stepper.setMinPulseWidth(20);
-    while(1) {
-        if (stepper.distanceToGo() == 0) {
-            //usleep(500);
-            //pos = -pos;
-            pos += 3600;
-            stepper.moveTo(pos);
-        }
+    cout << "freq: " << freq << endl;
+    stepper.run(0, freq);
+    stepper.setAcceleration(800);
+    while (!stepper.targetSpeedReached()) {
+        stepper.run();
+    }
+    sleep(4);
+    stepper.run(1, freq);
+    stepper.setAcceleration(800);
+    while (!stepper.targetSpeedReached()) {
         stepper.run();
     }
 	return 0;

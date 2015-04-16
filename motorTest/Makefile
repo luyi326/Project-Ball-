@@ -4,22 +4,25 @@ CC = g++
 # compiler flags:
 #  -g    adds debugging information to the executable file
 #  -Wall turns on most, but not all, compiler warnings
-CFLAGS  = -g -Wall -std=gnu++0x
+CFLAGS  = -g -Wall -std=gnu++0x -lrt
 # LFLAGS = -L /usr/local/lib/libblackLib.a
 
 # the build target executable:
-TARGET = motorTest
+TARGET = motorTest.out
 
 OBJDIR = ../BlackLib/
-ACCELDIR = ../AccelStepper/
+STEPPERDIR = ../BlackStepper/
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o AccelStepper.o $(OBJDIR)BlackLib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp AccelStepper.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o
+$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o BlackStepper.o $(OBJDIR)BlackLib.h $(STEPPERDIR)BlackStepper.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o  $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o
 
-AccelStepper.o: $(ACCELDIR)AccelStepper.h
-	$(CC) $(CFLAGS) -c $(ACCELDIR)AccelStepper.cpp
+BlackStepper.o: $(STEPPERDIR)BlackStepper.h
+	$(CC) $(CFLAGS) -c $(STEPPERDIR)BlackStepper.cpp
+
+DualStepperMotor.o: $(STEPPERDIR)DualStepperMotor.h $(STEPPERDIR)BlackStepper.h
+	$(CC) $(CFLAGS) -c $(STEPPERDIR)DualStepperMotor.cpp
 
 clean:
-	$(RM) $(TARGET)
+	$(RM) $(TARGET) BlackStepper.o DualStepperMotor.o

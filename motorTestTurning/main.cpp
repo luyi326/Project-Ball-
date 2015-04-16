@@ -48,6 +48,8 @@ int main (int argc, char* argv[]) {
         motorPair->run();
         usleep(50000);
     }
+    // cout << "Target reached, break!!!!" << endl;
+    // exit(0);
     sleep(4);
 
     motorPair->moveBackward(freq);

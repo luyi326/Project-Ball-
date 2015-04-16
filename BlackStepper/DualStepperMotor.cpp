@@ -16,11 +16,8 @@ DualStepperMotor::DualStepperMotor(
 }
 
 DualStepperMotor::~DualStepperMotor() {
-	setAcceleration(20);
-	moveForward(10000);
-	while (!targetSpeedReached()) {
-		run();
-	}
+	leftStepper.run(0, 100);
+	rightStepper.run(1, 100);
 }
 
 //Public functions
@@ -36,15 +33,15 @@ void DualStepperMotor::moveBackward(unsigned int frequency) {
 	rightStepper.run(1, frequency);
 }
 
-void DualStepperMotor::leftSpin(unsigned int frequency) {
-	leftStepper.run(0, frequency);
-	rightStepper.run(0, frequency);
-}
+// void DualStepperMotor::leftSpin(unsigned int frequency) {
+// 	leftStepper.run(0, frequency);
+// 	rightStepper.run(0, frequency);
+// }
 
-void DualStepperMotor::rightSpin(unsigned int frequency) {
-	leftStepper.run(1, frequency);
-	rightStepper.run(1, frequency);
-}
+// void DualStepperMotor::rightSpin(unsigned int frequency) {
+// 	leftStepper.run(1, frequency);
+// 	rightStepper.run(1, frequency);
+// }
 
 
 void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
