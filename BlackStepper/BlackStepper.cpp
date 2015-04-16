@@ -5,9 +5,9 @@
 #include "BlackStepper.h"
 using namespace std;
 
-// #define STEPPER_DEBUG
+#define STEPPER_DEBUG
 
-#define STEP_INTERVAL 100000
+#define STEP_INTERVAL 10000
 // #define STEP_SIZE_FREQ 15
 #define DEFAULT_ACCEL_STEP 15
 

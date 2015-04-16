@@ -35,7 +35,7 @@ int main (int argc, char* argv[]) {
         bias_step = atoi(argv[2]);
     }
     cout << "freq: " << freq << endl;
-    stepper->setAcceleration(50);
+    stepper->setAcceleration(10);
     stepper->run(1, freq);
     int bias = 0;
     while (bias >= -5500) {
