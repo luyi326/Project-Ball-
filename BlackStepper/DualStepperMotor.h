@@ -11,7 +11,7 @@ class DualStepperMotor {
 private:
 	BlackStepper leftStepper;
 	BlackStepper rightStepper;
-	float turn_bias;
+	unsigned int turn_bias;
 
 public:
 	DualStepperMotor(
@@ -21,13 +21,13 @@ public:
 		pwmName frequencyRight
 	);
 
-	void moveForward(uint64_t speed);
-	void moveBackward(uint64_t speed);
-	void leftSpin(uint64_t speed);
-	void rightSpin(uint64_t speed);
-	void setAcceleration(uint16_t acceration_step);
+	void moveForward(unsigned int frequency);
+	void moveBackward(unsigned int frequency);
+	// void leftSpin(uint64_t speed);
+	// void rightSpin(uint64_t speed);
+	void setAcceleration(unsigned int acceration_step);
 	void run();
-	void setBias(float bias);
+	void setBias(unsigned int bias);
 	void stop();
 
 	bool targetSpeedReached();

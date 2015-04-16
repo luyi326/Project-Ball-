@@ -29,18 +29,18 @@ int main (int argc, char* argv[]) {
     motorPair = new DualStepperMotor(GPIO_15, EHRPWM0A, GPIO_47, EHRPWM2B);
     cout << "Setup concluded" << endl;
 
-    uint64_t speed = 170;
+    unsigned int freq = 4000;
     if (argc >= 2) {
-        speed = atoi(argv[1]);
+        freq = atoi(argv[1]);
     }
-    float bias = 0.0f;
+    unsigned int bias = 0;
     if (argc >= 3) {
-        bias = atof(argv[2]);
+        bias = atoi(argv[2]);
     }
     motorPair->setAcceleration(300);
-    cout << "running at speed " << speed << " and bias " << bias << endl;
+    cout << "running at freq " << freq << " and bias " << bias << endl;
     // exit(0);
-    motorPair->moveForward(speed);
+    motorPair->moveForward(freq);
     motorPair->setBias(bias);
     motorPair->run();
     // exit(0);
@@ -50,7 +50,7 @@ int main (int argc, char* argv[]) {
     }
     sleep(4);
 
-    motorPair->moveBackward(speed);
+    motorPair->moveBackward(freq);
 
     while (!motorPair->targetSpeedReached()) {
         motorPair->run();

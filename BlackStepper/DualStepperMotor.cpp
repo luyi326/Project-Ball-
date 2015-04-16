@@ -26,40 +26,40 @@ DualStepperMotor::~DualStepperMotor() {
 //Public functions
 
 
-void DualStepperMotor::moveForward(uint64_t speed) {
-	leftStepper.run(1, speed);
-	rightStepper.run(0, speed);
+void DualStepperMotor::moveForward(unsigned int frequency) {
+	leftStepper.run(1, frequency);
+	rightStepper.run(0, frequency);
 }
 
-void DualStepperMotor::moveBackward(uint64_t speed) {
-	leftStepper.run(0, speed);
-	rightStepper.run(1, speed);
+void DualStepperMotor::moveBackward(unsigned int frequency) {
+	leftStepper.run(0, frequency);
+	rightStepper.run(1, frequency);
 }
 
-void DualStepperMotor::leftSpin(uint64_t speed) {
-	leftStepper.run(0, speed);
-	rightStepper.run(0, speed);
+void DualStepperMotor::leftSpin(unsigned int frequency) {
+	leftStepper.run(0, frequency);
+	rightStepper.run(0, frequency);
 }
 
-void DualStepperMotor::rightSpin(uint64_t speed) {
-	leftStepper.run(1, speed);
-	rightStepper.run(1, speed);
+void DualStepperMotor::rightSpin(unsigned int frequency) {
+	leftStepper.run(1, frequency);
+	rightStepper.run(1, frequency);
 }
 
 
-void DualStepperMotor::setAcceleration(uint16_t acceration_step) {
+void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
 }
 
-void DualStepperMotor::setBias(float bias) {
+void DualStepperMotor::setBias(unsigned int bias) {
 	turn_bias = bias;
 	leftStepper.setBias(-bias);
 	rightStepper.setBias(bias);
-	cout << "dualstepper::1 Set bias to " << bias << endl;
+	// cout << "dualstepper::1 Set bias to " << bias << endl;
 	leftStepper.run();
 	rightStepper.run();
-	cout << "dualstepper::2 Set bias to " << bias << endl;
+	// cout << "dualstepper::2 Set bias to " << bias << endl;
 }
 
 void DualStepperMotor::run() {

@@ -15,38 +15,36 @@ private:
 	//_current_direction, 0 : forward, 1: backward
 	bool _current_direction;
 	//_current_speed refers to frequency
-	uint64_t _current_speed;
-	uint64_t _current_freq;
+	unsigned int _current_freq;
 
 	timespec _last_timestamp;
 
 	bool _target_direction;
-	uint64_t _target_speed;
-	uint64_t _target_freq;
-	uint16_t _current_accelration_step;
+	unsigned int  _target_freq;
+	unsigned int _current_accelration_step;
 
-	float _turn_freq_bias;
+	unsigned int _turn_freq_bias;
 
 	bool _speedReached;
 
-	void setMovement(bool direction, uint64_t speed);
-	void setGPIOAndPWM(bool direction, uint64_t frequency);
+	void setMovement(bool direction, unsigned int frequency);
+	void setGPIOAndPWM(bool direction, unsigned int frequency);
 	inline bool isLongEnough();
 
 public:
 	BlackStepper(gpioName direction, pwmName frequency);
 	~BlackStepper();
 
-	void run(bool direction, uint64_t speed);
+	void run(bool direction, unsigned int frequency);
 	void run();
 	void stop();
-	void setAcceleration(uint16_t acceration_step);
-	void setBias(float bias);
+	void setAcceleration(unsigned int acceration_step);
+	void setBias(unsigned int bias);
 
 	bool getDirection();
-	uint64_t getSpeed();
-	uint16_t getAcceleration();
-	float getBias();
+	unsigned int getFrequency();
+	unsigned int getAcceleration();
+	unsigned int getBias();
 	bool targetSpeedReached();
 
 };
