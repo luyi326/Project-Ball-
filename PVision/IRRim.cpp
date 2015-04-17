@@ -247,7 +247,13 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	//experimental code for PID control start
 	//step1 get camera position
 	Blob left_avg, right_avg;
-	IRReadResult ir_state = read_IR(following_pair, &left_avg, &right_avg);
+	IRReadResult ir_state;
+	try {
+		ir_state = read_IR(following_pair, &left_avg, &right_avg);
+	} catch (const std::ios_base::failure& e) {
+        cerr << "Under flow happened in read_IR" << endl;
+        throw e;
+    }
 	// cout << "left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 	//step2 calculate camera values
 	int middle_point = 0;
@@ -385,7 +391,10 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 					break;
 					// throw e;
 				}
-			}
+			} catch (const std::ios_base::failure& e) {
+	            cerr << "Under flow happened in sensor 1" << endl;
+	            throw e;
+	        }
 			mux.selectChannel(PV_N(0));
 			try {
 				result2 = sensors[0].readBlob();
@@ -400,7 +409,10 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 					break;
 					// throw e;
 				}
-			}
+			} catch (const std::ios_base::failure& e) {
+	            cerr << "Under flow happened in sensor 0" << endl;
+	            throw e;
+	        }
 			pv1 = &(sensors[1]);
 			pv2 = &(sensors[0]);
 		break;
@@ -419,7 +431,10 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 					break;
 					// throw e;
 				}
-			}
+			} catch (const std::ios_base::failure& e) {
+	            cerr << "Under flow happened in sensor 2" << endl;
+	            throw e;
+	        }
 			mux.selectChannel(PV_N(3));
 			try {
 				result2 = sensors[3].readBlob();
@@ -434,7 +449,10 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 					break;
 					// throw e;
 				}
-			}
+			} catch (const std::ios_base::failure& e) {
+	            cerr << "Under flow happened in sensor 3" << endl;
+	            throw e;
+	        }
 			pv1 = &(sensors[2]);
 			pv2 = &(sensors[3]);
 		break;
