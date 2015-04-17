@@ -58,7 +58,7 @@ typedef struct {
  */
 typedef struct {
 	bool target_located;
-	uint16_t angle; //clockwise, up front is 0 degrees
+	int angle; //clockwise, up front is 0 degrees
 	float distance; // distance in cm
 } IR_target;
 ostream& operator<<(ostream& os, const IR_target& t);
@@ -114,7 +114,7 @@ private:
 	int current_lower_bound;
 	int current_upper_bound;
 
-	uint8_t servo_current_position;
+	float servo_current_position;
 	bool is_seeking;
 	bool seeking_is_upwared;
 	IR_target dummy_target;
