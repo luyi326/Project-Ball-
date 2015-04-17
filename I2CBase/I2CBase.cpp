@@ -17,23 +17,22 @@ I2CBase::I2CBase(string _busName, uint8_t _address) : address(_address), busName
 	i2cDescriptor = open(busName.c_str(), O_RDWR);
 	busReady = false;
 	if (i2cDescriptor < 0) {
-		cout << "I2CBase::I2CBase::Open i2c bus " << busName;
-		cout << " error, error message: " << strerror(errno) << endl;
+		cerr << "I2CBase::I2CBase::Open i2c bus " << busName;
+		cerr << " error, error message: " << strerror(errno) << endl;
 		return;
 	}
 	if (ioctl(i2cDescriptor, I2C_SLAVE, address) < 0) {
-		cout << "I2CBase::I2CBase::Init slave " << busName;
-		cout << "error, error message: " << strerror(errno) << endl;
+		cerr << "I2CBase::I2CBase::Init slave " << busName;
+		cerr << "error, error message: " << strerror(errno) << endl;
 		return;
 	}
-	cout << "Mux ready" << endl;
 	busReady = true;
 }
 
 I2CBase::~I2CBase() {
 	if (close(i2cDescriptor) == -1) {
-		cout << "I2CBase::~I2CBase:: write fail";
-		cout << ", error message: " << strerror(errno) << endl;
+		cerr << "I2CBase::~I2CBase:: write fail";
+		cerr << ", error message: " << strerror(errno) << endl;
 	}
 }
 
@@ -43,19 +42,19 @@ bool I2CBase::isBusReady() {
 
 uint8_t I2CBase::readByte(uint8_t reg) {
 	if (!busReady) {
-		cout << "Bus not ready!" << endl;
+		cerr << "Bus not ready!" << endl;
 		return 0;
 	}
 
 	if (write(i2cDescriptor, &reg, 1) != 1) {
-		cout << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
+		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
 		return 0;
 	}
 
 	uint8_t value;
 
 	if (read(i2cDescriptor, &value, 1) != 1) {
-		cout << "Can not read data. Address 0x" << hex << (int)address << "." << dec << endl;
+		cerr << "Can not read data. Address 0x" << hex << (int)address << "." << dec << endl;
 		return 0;
 	}
 	return value;
@@ -63,23 +62,23 @@ uint8_t I2CBase::readByte(uint8_t reg) {
 
 void I2CBase::writeReg(uint8_t reg, uint8_t value) {
 	if (!busReady) {
-		cout << "Bus not ready!" << endl;
+		cerr << "Bus not ready!" << endl;
 		return;
 	}
 
 	uint8_t buffer[2] = {reg, value};
 	if (write(i2cDescriptor, buffer, 2) != 2) {
-		cout << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
+		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
 	}
 }
 
 void I2CBase::writeByte(uint8_t value) {
 	if (!busReady) {
-		cout << "Bus not ready!" << endl;
+		cerr << "Bus not ready!" << endl;
 		return;
 	}
 
 	if (write(i2cDescriptor, &value, 1) != 1) {
-		cout << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
+		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
 	}
 }
