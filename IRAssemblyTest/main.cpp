@@ -24,7 +24,7 @@ void clean_up();
 void sig_handler(int signo)
 {
     if (signo == SIGINT) {
-        cout << "\nReceived SIGINT" << endl;
+        cout << "\nMAIN::Received SIGINT" << endl;
         clean_up();
         exit(0);
     }
@@ -33,19 +33,19 @@ void sig_handler(int signo)
 int main (int argc, char* argv[]) {
     // Register sigint
     if (signal(SIGINT, sig_handler) == SIG_ERR) {
-        cout << "Cannot register SIGINT handler" << endl;
+        cerr << "MAIN::Cannot register SIGINT handler" << endl;
     }
     int retry_count = 0;
-    while (1) {
+    for(;;) {
         try {
             motorPair = new DualStepperMotor(GPIO_15, EHRPWM0A, GPIO_47, EHRPWM2B);
-            cout << "Setup concluded" << endl;
+            cout << "MAIN::Setup concluded" << endl;
 
             uint64_t freq = 100;
             int bias = 0;
 
             motorPair->setAcceleration(100);
-            cout << "running at freq " << freq <<endl;
+            cout << "MAIN::running at freq " << freq <<endl;
             motorPair->moveForward(freq);
             motorPair->setBias(bias);
 
@@ -53,7 +53,8 @@ int main (int argc, char* argv[]) {
                 rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
             } catch (naughty_exception ex) {
                 if (ex == naughty_exception_PVisionInitFail) {
-                    cerr << "One or more IR sensors are malfunctioning, exiting" << endl;
+                    cerr << "MAIN::One or more IR sensors are malfunctioning, exiting" << endl;
+                    clean_up();
                     exit(1);
                 }
             }
@@ -61,13 +62,9 @@ int main (int argc, char* argv[]) {
             PID pid_turn(0.5, 1.0f / 40, 1.0f / 80, 3, 0);
 
             int lost_count = 0;
-            while (1) {
+            for(;;) {
                 int angle_bias = 0;
                 IR_target target;
-                try {
-                    ////////////////////////////////////////////////////////////////////////////////
-                    //////////////////////////TRY BLOCK/////////////////////////////////////////////
-
                 timespec t1;
                 clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
 
@@ -94,21 +91,11 @@ int main (int argc, char* argv[]) {
                 rim->run();
                 target = rim->run();
 
-                    //////////////////////////END TRY BLOCK/////////////////////////////////////////
-                    ////////////////////////////////////////////////////////////////////////////////
-                } catch (const std::ios_base::failure& e) {
-                    cerr << "Under flow happened in first half of main" << endl;
-                    throw e;
-                }
-
-                try {
-                    ////////////////////////////////////////////////////////////////////////////////
-                    //////////////////////////TRY BLOCK/////////////////////////////////////////////
                 if (target.distance < -2) target.distance = -target.distance;
                 if (target.target_located && target.distance > 20) {
                     lost_count = 0;
                     bool left_or_right = true;
-                    cout << "target aqquired" << endl;
+                    cout << "MAIN::target acquired" << endl;
                     motorPair->setAcceleration(100);
                     cout << target << endl;
                     bool forward = true;
@@ -126,9 +113,9 @@ int main (int argc, char* argv[]) {
                         angle_bias = 180 - angle_bias;
                         forward = false;
                     }
-                    cout << "angle bias is " << angle_bias << " to the " << (left_or_right?"left":"right") << endl;
+                    cout << "MAIN::angle bias is " << angle_bias << " to the " << (left_or_right?"left":"right") << endl;
                     if (target.distance < 10) {
-                        cout << "target is too close! abort!" << endl;
+                        cout << "MAIN::target is too close! abort!" << endl;
                         delete motorPair;
                         delete rim;
                         exit(0);
@@ -141,13 +128,13 @@ int main (int argc, char* argv[]) {
                         } else if (target.distance > 30) {
                             freq = 3500;
                         }
-                        cout << "main:: ck point 9: distance = " << target.distance << " new freq = " << freq << endl;
+                        cout << "MAIN::distance = " << target.distance << " new freq = " << freq << endl;
                         if (forward) {
                             motorPair->moveForward(freq);
-                            cout << "Setting speed to " << freq << endl;
+                            cout << "MAIN::Setting speed to " << freq << endl;
                         } else {
                             motorPair->moveBackward(freq);
-                            cout << "Setting speed to " << freq << endl;
+                            cout << "MAIN::Setting speed to " << freq << endl;
                         }
                         float tmpBias = 0;
                         int middle_angle = 0;
@@ -175,11 +162,11 @@ int main (int argc, char* argv[]) {
                         }
                         bias = tmpBias;
                         motorPair->setBias(tmpBias);
-                        cout << "Setting bias to " << tmpBias << endl;
+                        cout << "MAIN::Setting bias to " << tmpBias << endl;
                     }
                 } else {
                     motorPair->setBias(0);
-                    if (lost_count < 10) {
+                    if (lost_count < 30) {
                         lost_count++;
                         continue;
                     }
@@ -187,18 +174,17 @@ int main (int argc, char* argv[]) {
                     motorPair->moveForward(100);
                     rim->force_seek();
                     if (target.target_located) {
-                        cout << "Target located but distance is too short" << endl;
+                        cout << "MAIN::Target located but distance is too short" << endl;
                     }
                 }
 
                     //////////////////////////END TRY BLOCK/////////////////////////////////////////
                     ////////////////////////////////////////////////////////////////////////////////
                 } catch (const std::ios_base::failure& e) {
-                    cerr << "Under flow happened in second half of main" << endl;
+                    cerr << "MAIN::Under flow happened in second half of main" << endl;
                     throw e;
                 }
             }
-            clean_up();
         } catch (...) {
             clean_up();
             retry_count++;
@@ -211,7 +197,6 @@ int main (int argc, char* argv[]) {
     }
 	return 0;
 }
-
 
 void clean_up() {
     if (motorPair) {
