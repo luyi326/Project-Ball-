@@ -14,6 +14,8 @@
 using namespace BlackLib;
 using namespace std;
 
+#define BIAS_COEFF 60
+
 DualStepperMotor* motorPair;
 IRRim* rim;
 
@@ -56,6 +58,12 @@ int main (int argc, char* argv[]) {
 
     int lost_count = 0;
     while (1) {
+        int angle_bias = 0;
+        IR_target target;
+        try {
+            ////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////TRY BLOCK/////////////////////////////////////////////
+
         // cout << "main:: ck point 1" << endl;
         timespec t1;
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
@@ -84,10 +92,18 @@ int main (int argc, char* argv[]) {
         rim->run();
         rim->run();
         rim->run();
-        IR_target target = rim->run();
-        int angle_bias = 0;
-        // cout << "main:: ck point 5" << endl;
-        // TODO: Need PID control???
+        target = rim->run();
+
+            //////////////////////////END TRY BLOCK/////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////
+        } catch (const std::ios_base::failure& e) {
+            cerr << "Under flow happened in first half of main" << endl;
+            throw e;
+        }
+
+        try {
+            ////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////TRY BLOCK/////////////////////////////////////////////
         if (target.distance < -2) target.distance = -target.distance;
         if (target.target_located && target.distance > 20) {
             lost_count = 0;
@@ -120,8 +136,15 @@ int main (int argc, char* argv[]) {
                 delete rim;
                 exit(0);
             } else {
+                // freq = (target.distance - 20) * 100 + 100;
+                if (target.distance > 80) {
+                    freq = 5500;
+                } else if (target.distance > 50) {
+                    freq = 4500;
+                } else if (target.distance > 30) {
+                    freq = 3500;
+                }
                 cout << "main:: ck point 9: distance = " << target.distance << " new freq = " << freq << endl;
-                freq = (target.distance - 20) * 100 + 100;
                 if (forward) {
                     motorPair->moveForward(freq);
                     cout << "Setting speed to " << freq << endl;
@@ -135,14 +158,14 @@ int main (int argc, char* argv[]) {
                 if (left_or_right) {
                     middle_angle = - angle_bias;
                     if (forward)
-                        tmpBias = angle_bias * 70;
+                        tmpBias = angle_bias * BIAS_COEFF;
                     else
-                        tmpBias = -angle_bias * 70;
+                        tmpBias = -angle_bias * BIAS_COEFF;
                 } else {
                     if (forward)
-                        tmpBias =  -angle_bias * 70;
+                        tmpBias =  -angle_bias * BIAS_COEFF;
                     else
-                        tmpBias = angle_bias * 70;
+                        tmpBias = angle_bias * BIAS_COEFF;
                     middle_angle = angle_bias;
                 }
                 // cout << "main:: ck point 11" << endl;
@@ -154,11 +177,11 @@ int main (int argc, char* argv[]) {
                 } else {
                     middle_error = 0;
                 }
-                int correct = int(lround(pid_turn.kernel(middle_error, middle_angle)));
+                // int correct = int(lround(pid_turn.kernel(middle_error, middle_angle)));
                 bias = tmpBias;
                 // cout << "correction is " << correct << endl;
                 motorPair->setBias(tmpBias);
-                // cout << "Setting bias to " << tmpBias << endl;
+                cout << "Setting bias to " << tmpBias << endl;
             }
         } else {
             motorPair->setBias(0);
@@ -173,6 +196,13 @@ int main (int argc, char* argv[]) {
             if (target.target_located) {
                 cout << "Target located but distance is too short" << endl;
             }
+        }
+
+            //////////////////////////END TRY BLOCK/////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////
+        } catch (const std::ios_base::failure& e) {
+            cerr << "Under flow happened in second half of main" << endl;
+            throw e;
         }
     }
 

@@ -93,14 +93,24 @@ bool BlackServo::target_position_reached() {
 }
 
 void BlackServo::set_duty_percent(float target_duty) {
-	_dutycycle.setDutyPercent(target_duty);
-	#ifdef BLACK_SERVO_DEBUG
-		cout << "target duty cicle = : " << target_duty << endl;
-	#endif
+	try {
+		_dutycycle.setDutyPercent(target_duty);
+		#ifdef BLACK_SERVO_DEBUG
+			cout << "target duty cicle = : " << target_duty << endl;
+		#endif
+	} catch (const std::ios_base::failure& e) {
+		cerr << "Under flow happened in BlackServo::set_duty_percent" << endl;
+		throw e;
+	}
 }
 
 BlackServo::~BlackServo() {
-	_dutycycle.setDutyPercent(0.0);
-	_dutycycle.setPeriodTime(0, BlackLib::microsecond);
-	usleep(200);
+	try {
+		_dutycycle.setDutyPercent(0.0);
+		_dutycycle.setPeriodTime(0, BlackLib::microsecond);
+		usleep(200);
+	} catch (const std::ios_base::failure& e) {
+		cerr << "Under flow happened in BlackServo::BlackServo" << endl;
+		throw e;
+	}
 }

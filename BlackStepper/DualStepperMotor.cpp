@@ -49,7 +49,7 @@ void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
 	rightStepper.setAcceleration(acceration_step);
 }
 
-void DualStepperMotor::setBias(unsigned int bias) {
+void DualStepperMotor::setBias(int bias) {
 	turn_bias = bias;
 	leftStepper.setBias(-bias);
 	rightStepper.setBias(bias);

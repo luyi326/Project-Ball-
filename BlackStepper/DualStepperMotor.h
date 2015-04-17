@@ -27,7 +27,7 @@ public:
 	// void rightSpin(uint64_t speed);
 	void setAcceleration(unsigned int acceration_step);
 	void run();
-	void setBias(unsigned int bias);
+	void setBias(int bias);
 	void stop();
 
 	bool targetSpeedReached();

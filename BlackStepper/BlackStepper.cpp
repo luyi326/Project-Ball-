@@ -229,7 +229,12 @@ void BlackStepper::setMovement(bool direction, unsigned int frequency) {
 			_speedReached = true;
 		}
 
-		setGPIOAndPWM(_current_direction, static_cast<unsigned int>(_current_freq));
+		try {
+			setGPIOAndPWM(_current_direction, static_cast<unsigned int>(_current_freq));
+		} catch (const std::ios_base::failure& e) {
+			cerr << "Under flow happened in blackStepper" << endl;
+			throw e;
+		}
 
 		// update timestamp
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &_last_timestamp);
