@@ -23,8 +23,6 @@ public:
 
 	void moveForward(unsigned int frequency);
 	void moveBackward(unsigned int frequency);
-	// void leftSpin(uint64_t speed);
-	// void rightSpin(uint64_t speed);
 	void setAcceleration(unsigned int acceration_step);
 	void run();
 	void setBias(int bias);

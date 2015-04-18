@@ -14,7 +14,7 @@
 using namespace BlackLib;
 using namespace std;
 
-#define BIAS_COEFF 70
+#define BIAS_COEFF 110
 
 DualStepperMotor* motorPair;
 IRRim* rim;
@@ -96,7 +96,7 @@ int main (int argc, char* argv[]) {
                     lost_count = 0;
                     bool left_or_right = true;
                     cout << "MAIN::target acquired" << endl;
-                    motorPair->setAcceleration(100);
+                    motorPair->setAcceleration(300);
                     cout << target << endl;
                     bool forward = true;
                     if (target.angle >= 0 && target.angle < 180) {
@@ -121,13 +121,7 @@ int main (int argc, char* argv[]) {
                         exit(0);
                     } else {
                         // freq = (target.distance - 20) * 100 + 100;
-                        if (target.distance > 80) {
-                            freq = 5500;
-                        } else if (target.distance > 50) {
-                            freq = 4500;
-                        } else if (target.distance > 30) {
-                            freq = 3500;
-                        }
+                        freq = 5700;
                         cout << "MAIN::distance = " << target.distance << " new freq = " << freq << endl;
                         if (forward) {
                             motorPair->moveForward(freq);
@@ -166,7 +160,7 @@ int main (int argc, char* argv[]) {
                     }
                 } else {
                     motorPair->setBias(0);
-                    if (lost_count < 30) {
+                    if (lost_count < 15) {
                         lost_count++;
                         continue;
                     }
@@ -176,13 +170,6 @@ int main (int argc, char* argv[]) {
                     if (target.target_located) {
                         cout << "MAIN::Target located but distance is too short" << endl;
                     }
-                }
-
-                    //////////////////////////END TRY BLOCK/////////////////////////////////////////
-                    ////////////////////////////////////////////////////////////////////////////////
-                } catch (const std::ios_base::failure& e) {
-                    cerr << "MAIN::Under flow happened in second half of main" << endl;
-                    throw e;
                 }
             }
         } catch (...) {

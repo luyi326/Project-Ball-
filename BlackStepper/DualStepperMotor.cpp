@@ -33,16 +33,6 @@ void DualStepperMotor::moveBackward(unsigned int frequency) {
 	rightStepper.run(1, frequency);
 }
 
-// void DualStepperMotor::leftSpin(unsigned int frequency) {
-// 	leftStepper.run(0, frequency);
-// 	rightStepper.run(0, frequency);
-// }
-
-// void DualStepperMotor::rightSpin(unsigned int frequency) {
-// 	leftStepper.run(1, frequency);
-// 	rightStepper.run(1, frequency);
-// }
-
 
 void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
 	leftStepper.setAcceleration(acceration_step);
