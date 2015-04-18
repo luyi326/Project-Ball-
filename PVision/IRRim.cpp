@@ -4,8 +4,9 @@
 #include <ctime>
 #include "BlobCompare.h"
 
-#define IR_RIM_DEBUG
-#define QUICK_IR_RIM_DEBUG
+// #define IR_RIM_DEBUG
+// #define QUICK_IR_RIM_DEBUG
+#define LOCALATION_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+0))
@@ -211,7 +212,7 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	try {
 		ir_state = read_IR(following_pair, &left_avg, &right_avg);
 	} catch (const std::ios_base::failure& e) {
-        cerr << "Under flow happened in read_IR" << endl;
+        cerr << "IRRim::follow::Underflow happened in read_IR" << endl;
         throw e;
     }
 	// cout << "left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
@@ -249,7 +250,7 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			middle_point = -left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is on left" << endl;
-			cout << "IRRim::follow::Left middle_point: " << middle_point;
+			cout << "IRRim::follow::Left middle_point: " << middle_point << endl;;
 			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 			#endif
 			// cout << "Servo moving clockwise" << endl;
@@ -278,8 +279,11 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			// cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
 			// cout << "Target location: " << target_location << endl;
-			cout << "IRRim::follow::middle_point: " << middle_point;
+			cout << "IRRim::follow::middle_point: " << middle_point << endl;
 			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
+			#endif
+			#ifdef LOCALATION_DEBUG
+			cout << "IRRIM::follow::target_location is " << target_location << endl;
 			#endif
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			new_target.angle = servo.current_position();
