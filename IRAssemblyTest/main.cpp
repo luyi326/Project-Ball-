@@ -65,8 +65,6 @@ int main (int argc, char* argv[]) {
             for(;;) {
                 int angle_bias = 0;
                 IR_target target;
-                timespec t1;
-                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
 
                 if (!motorPair->targetSpeedReached()) {
                     motorPair->run();

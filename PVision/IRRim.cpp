@@ -191,31 +191,8 @@ void IRRim::seek() {
 			#endif
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
 		}
-	}/* else {
-		timespec temp;
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &temp);
-		if (temp.tv_sec - last_arrive_time.tv_sec > 0 || temp.tv_nsec - last_arrive_time.tv_nsec > 300000000) {
-			cout << "Servo is taking too long to rotate" << endl;
-			if (servo_current_position == current_lower_bound) {
-				servo_current_position = current_upper_bound;
-				if (current_lower_bound > 0) current_lower_bound -= 10;
-				if (current_lower_bound < 0) current_lower_bound = 0;
-				#ifdef IR_RIM_DEBUG
-				cout << "Moving to " << int(current_upper_bound) << endl;
-				#endif
-				clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
-			} else {
-				servo_current_position = current_lower_bound;
-				if (current_upper_bound < 180) current_upper_bound += 10;
-				if (current_upper_bound > 180) current_upper_bound = 180;
-				#ifdef IR_RIM_DEBUG
-				cout << "Moving to " << int(current_lower_bound) << endl;
-				#endif
-				clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
-			}
-		}
+	}
 
-	}*/
 	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
 		servo_current_position = (int)servo.current_position();
 		#ifdef IR_RIM_DEBUG
