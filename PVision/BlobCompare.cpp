@@ -71,10 +71,15 @@ inline void invalidateBlob(Blob* b) {
 }
 
 Blob average(uint8_t result, PVision* pv) {
+	if (result & BLOB1) {
+		return pv->Blob1;
+	}
+
 	Blob avgBlob;
-	avgBlob.X = 0;
-	avgBlob.Y = 0;
+	avgBlob.X = -1;
+	avgBlob.Y = -1;
 	avgBlob.Size = 1;
+	return avgBlob;
 	int count = 0;
 	if (result & BLOB4) {
 		count = 4;

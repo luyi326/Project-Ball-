@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctime>
+#include <cmath>
 #include "BlobCompare.h"
 
 // #define IR_RIM_DEBUG
 // #define QUICK_IR_RIM_DEBUG
-#define LOCALATION_DEBUG
+// #define LOCALATION_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+0))
@@ -16,7 +17,7 @@
 
 #define PVISION_MAX_ATTEMPT (5)
 
-#define FULL_HORIZONTAL (1024)
+#define FULL_HORIZONTAL (1000)
 #define FULL_VERTICAL (750)
 #define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
 #define HALF_VERTICAL (FULL_VERTICAL/2)
@@ -25,11 +26,13 @@
 
 #define FULL_D_SENSOR (4.0f)
 #define HALF_D_SENSOR (FULL_D_SENSOR/2)
+#define PI (3.14159265)
+#define HALF_PI (1.57079632)
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
 
-#define SERVO_SEEK_TOLERANCE 0.05f
-#define SERVO_FOLLOW_TOLERANCE 0.10f
+#define SERVO_SEEK_TOLERANCE (0.05f)
+#define SERVO_FOLLOW_TOLERANCE (0.10f)
 
 
 float PID_kernel(PID_IRRim& pid, float error, float position);
@@ -89,7 +92,8 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	should_reverse(false),
 	o_left(-HALF_D_SENSOR, 0, 0),
 	o_right(HALF_D_SENSOR, 0, 0),
-	o_left_m_right(-FULL_D_SENSOR, 0, 0)
+	o_left_m_right(-FULL_D_SENSOR, 0, 0)//,
+	// distance_list(100)
 	{
 	if (num_of_sensors > 6) {
 		cerr << "IRRim::IRRim::Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
@@ -273,7 +277,7 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			new_target.distance = -1.0f;
 			break;
 		case IRReadResultMiddle:
-			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
+			double target_distance = calculate_target_coordinate(left_avg.X, right_avg.X);
 			middle_point = FULL_HORIZONTAL - right_avg.X - left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is in the middle" << endl;
@@ -283,11 +287,11 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 			#endif
 			#ifdef LOCALATION_DEBUG
-			cout << "IRRIM::follow::target_location is " << target_location << endl;
+			// cout << "IRRIM::follow::left_avg is " << left_avg << " right_avg is " << right_avg << " target_location is " << target_location << endl;
 			#endif
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			new_target.angle = servo.current_position();
-			new_target.distance = - target_location.z;
+			new_target.distance = target_distance;
 		break;
 	}
 
@@ -528,28 +532,61 @@ inline void validateBlob(uint8_t index_left, uint8_t index_right) {
 
 //Z positioning algos starts here
 
-inline vec IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
-	vec dir_left = get_directional_vec(left_x, left_y);
-	vec dir_right = get_directional_vec(right_x, right_y);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::directional left: " << dir_left << endl;
-	cout << "IRRim::calculate_target_coordinate::directional right: " << dir_right << endl;
+inline double IRRim::calculate_target_coordinate(int left_x, int right_x) {
+	// vec dir_left = get_directional_vec(left_x, left_y);
+	// vec dir_right = get_directional_vec(right_x, right_y);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::directional left: " << dir_left << endl;
+	// cout << "IRRim::calculate_target_coordinate::directional right: " << dir_right << endl;
+	// #endif
+	// float z_left, z_right;
+	// calculate_intersection_point(dir_left, dir_right, z_left, z_right);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::z_left = " << z_left << " z_right = " << z_right << endl;
+	// #endif
+	// vec s_C = o_left + (dir_left * z_left);
+	// vec t_C = o_right + (dir_right * z_right);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::s_C = " << s_C << " t_C = " << t_C << endl;
+	// #endif
+	// vec mid = vec::mid_point(s_C, t_C);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::mid = " << mid << endl;
+	// #endif
+	// return mid;
+	double alpha = HALF_PI - atan(static_cast<double>(HALF_HORIZONTAL - left_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double beta = HALF_PI + atan(static_cast<double>(HALF_HORIZONTAL - right_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double tan_alpha = tan(alpha);
+	double tan_beta = tan(beta);
+	double distance = tan_alpha * tan_beta / (tan_alpha + tan_beta) * FULL_D_SENSOR;
+	double filtered = filtered_result(distance);
+	#ifdef LOCALATION_DEBUG
+	// cout << "left_x is " << left_x << " alpha is " << alpha << " in degrees: " << alpha * 180 / PI << endl;
+	// cout << "right_x is " << right_x << " beta is " << beta << " in degrees: " << beta * 180 / PI << endl;
+	cout << "distance = " << distance << " filtered = " << filtered << endl;;
 	#endif
-	float z_left, z_right;
-	calculate_intersection_point(dir_left, dir_right, z_left, z_right);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::z_left = " << z_left << " z_right = " << z_right << endl;
-	#endif
-	vec s_C = o_left + (dir_left * z_left);
-	vec t_C = o_right + (dir_right * z_right);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::s_C = " << s_C << " t_C = " << t_C << endl;
-	#endif
-	vec mid = vec::mid_point(s_C, t_C);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::mid = " << mid << endl;
-	#endif
-	return mid;
+	return filtered;
+}
+
+double IRRim::filtered_result(double distance) {
+	static bool initial = true;
+	static double avg = 0;
+	if (distance < 0) {
+		return avg;
+	}
+	if (initial) {
+		initial = false;
+		avg = distance;
+		return distance;
+	} else {
+		avg *= 0.98;
+		avg += 0.02 * distance;
+		if (fabs(avg - distance) > 30) {
+			return avg;
+		} else {
+			return distance;
+		}
+	}
 }
 
 inline vec IRRim::get_directional_vec(int x, int y) {

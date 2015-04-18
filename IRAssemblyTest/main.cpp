@@ -89,7 +89,7 @@ int main (int argc, char* argv[]) {
                 rim->run();
                 target = rim->run();
 
-                if (target.distance < -2) target.distance = -target.distance;
+                // if (target.distance < -2) target.distance = -target.distance;
                 if (target.target_located && target.distance > 20) {
                     lost_count = 0;
                     bool left_or_right = true;
@@ -119,6 +119,7 @@ int main (int argc, char* argv[]) {
                         exit(0);
                     } else {
                         // freq = (target.distance - 20) * 100 + 100;
+                        // if (target.distance > )
                         freq = 5700;
                         cout << "MAIN::distance = " << target.distance << " new freq = " << freq << endl;
                         if (forward) {
@@ -162,7 +163,7 @@ int main (int argc, char* argv[]) {
                         lost_count++;
                         continue;
                     }
-                    motorPair->setAcceleration(200);
+                    motorPair->setAcceleration(300);
                     motorPair->moveForward(100);
                     rim->force_seek();
                     if (target.target_located) {
