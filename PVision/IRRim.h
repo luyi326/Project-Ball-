@@ -6,7 +6,6 @@
 #include <ctime>
 #include "PVision.h"
 #include "PCA9548A.h"
-#include "IR_target.h"
 #include "vec.h"
 #include "../BlackLib/BlackCore.h"
 #include "../BlackLib/BlackGPIO.h"
@@ -47,6 +46,22 @@ typedef struct {
 	float dGain; // derivative gain
 
 } PID_IRRim;
+
+/**
+ * @brief Target information
+ *
+ * @param target_located 	Indicate if this is a package containing valid target information, will be false
+ *                       	if no target is seen within vision
+ * @param angle 			angle of target relatvie to the ball, 0-360
+ * @param distance 			distance of the target from the ball in centimeters, if negative, means a distance
+ *                    		is not yet available (when following is still calculating)
+ */
+typedef struct {
+	bool target_located;
+	int angle; //clockwise, up front is 0 degrees
+	float distance; // distance in cm
+} IR_target;
+ostream& operator<<(ostream& os, const IR_target& t);
 
 /**
  * @brief [brief description]
@@ -92,18 +107,19 @@ private:
 	PVision* sensors;
 	BlackServo servo;
 	uint8_t sensor_count;
-	IRRimState state;
+	IRRimState seeking_state;
 	IRSensorPair current_active_pair;
 	timespec target_last_seen;
 	int current_iteration;
 	int current_lower_bound;
 	int current_upper_bound;
 
-	uint8_t servo_current_position;
-	IRRimState targeting_state;
+	float servo_current_position;
+	// bool is_seeking;
 	bool seeking_is_upwared;
 	IR_target dummy_target;
 	IR_target last_target;
+	bool should_reverse;
 
 	const vec o_left;
 	const vec o_right;
@@ -113,45 +129,16 @@ private:
 	void select(uint8_t num);
 	void seek();
 	IR_target follow(IRSensorPair);
-	/**
-	 * @brief 0 for goto 0, 1 for goto 180
-	 * @details [long description]
-	 *
-	 * @param direction [description]
-	 */
 	void reverse();
-
-/**
- * @brief This function will return
- * @details [long description]
- *
- * @param pair [description]
- * @param pv1 [description]
- * @param pv2 [description]
- * @return return True when the reading is OK, False otherwise
- */
-	inline bool read_IR_read_sensor(IRSensorPair pair, PVsion* pv1, PVision* pv2);
+	void inspect_sensors();
 
 	inline void validateBlob(uint8_t index_left, uint8_t index_right);
 
 	// inline timespec time_diff(timespec t1, timespec t2);
 
-	/**
-	 * @brief [brief description]
-	 * @details the target coordinate might actually correspond to x->x and y->z since y axis is the axis
-	 * looking forward and z is pointing upward
-	 *
-	 * @param left_x [description]
-	 * @param left_y [description]
-	 * @param right_x [description]
-	 * @param right_y [description]
-	 * @return [description]
-	 */
 	inline vec calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
 	inline vec get_directional_vec(int x, int y);
 	inline void calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right);
-
-	inline void handle_sensor_exception(naughty_exception e, uint8_t sensor_index);
 };
 
 #endif
