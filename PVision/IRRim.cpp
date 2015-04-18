@@ -4,8 +4,8 @@
 #include <ctime>
 #include "BlobCompare.h"
 
-// #define IR_RIM_DEBUG
-// #define QUICK_IR_RIM_DEBUG
+#define IR_RIM_DEBUG
+#define QUICK_IR_RIM_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+0))
