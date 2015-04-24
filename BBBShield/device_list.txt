@@ -1,0 +1,44 @@
+Motor:
+      Motor 1:
+            Direction   P8_17
+            Freq        P8_19
+      Motor 2:
+            Direction P8_15
+            Freq      P8_13
+
+
+Servo Motor:
+        Stepper:
+                PWM:  P9_16
+                FB:   P9_39  (Extra requirement)
+
+Sensor:
+       Camera MUX:
+              VCC:    5V
+              SCL:    P9_19
+              SDA:    P9_20
+              RST:    P9_15
+
+
+XBee:
+     RX:      P9_26
+     TX:      P9_24
+
+LED:
+    VCC: 5V
+    Control:   Trinker 3
+    Trinker:
+            Bat+ VCC
+            SCL  P9_19
+            SDA  P9_20
+
+Speaker:
+    SN74LV4051A-Q1 1:18 MUX/DEMUX
+
+
+
+
+
+NOTE:
+     More I2C connector
+
