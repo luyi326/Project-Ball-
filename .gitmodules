@@ -8,3 +8,9 @@
 	path = exploringBB
 	url = git@github.com:derekmolloy/exploringBB.git
 
+[submodule "Example-Sketch-for-IMU-including-Kalman-filter"]
+	path = Example-Sketch-for-IMU-including-Kalman-filter
+	url = git@github.com:TKJElectronics/Example-Sketch-for-IMU-including-Kalman-filter.git
+[submodule "KalmanFilter"]
+	path = KalmanFilter
+	url = git@github.com:TKJElectronics/KalmanFilter.git

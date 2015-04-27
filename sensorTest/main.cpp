@@ -46,7 +46,7 @@ int main (int argc, char* argv[]) {
         cout << "Accelerometer values: x = " << accele_x << " y = " << accele_y << " z = " << accele_z << endl;
         cout << "Compass values: x = " << compass_v.XAxis << " y = " << compass_v.YAxis << " z = " << compass_v.ZAxis << endl;
         cout << "Gyroscope values: x = " << gyro->g.x << " y = " << gyro->g.y << " z = " << gyro->g.z << endl;
-        sleep(1);
+        // sleep(1);
     }
 
     delete accele;

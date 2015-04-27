@@ -1,0 +1,40 @@
+IRRim::follow::middle_point: -100
+IRRim::follow::left coordinate: (637, 336, 1), right coordinate: (463, 440, 1)
+distance = -38.363 filtered = 35.4826
+IRRim::follow::middle_point: -102
+IRRim::follow::left coordinate: (639, 344, 1), right coordinate: (463, 440, 1)
+distance = -38.1463 filtered = 35.4826
+IRRim::follow::middle_point: -97
+IRRim::follow::left coordinate: (637, 333, 1), right coordinate: (460, 428, 1)
+distance = -38.363 filtered = 35.4826
+IRRim::follow::middle_point: -98
+IRRim::follow::left coordinate: (637, 334, 1), right coordinate: (461, 437, 1)
+distance = -38.804 filtered = 35.4826
+IRRim::follow::middle_point: -98
+IRRim::follow::left coordinate: (636, 333, 1), right coordinate: (462, 435, 1)
+distance = -38.5822 filtered = 35.4826
+IRRim::follow::middle_point: -97
+IRRim::follow::left coordinate: (636, 340, 1), right coordinate: (461, 433, 1)
+distance = -38.5822 filtered = 35.4826
+IRRim::follow::middle_point: -99
+IRRim::follow::left coordinate: (637, 337, 1), right coordinate: (462, 432, 1)
+distance = -38.363 filtered = 35.4826
+IRRim::follow::middle_point: -100
+IRRim::follow::left coordinate: (638, 335, 1), right coordinate: (462, 431, 1)
+distance = -57.2194 filtered = 35.4826
+IRRim::follow::middle_point: -150
+IRRim::follow::left coordinate: (634, 334, 1), right coordinate: (516, 420, 1)
+distance = -57.7084 filtered = 35.4826
+IRRim::follow::middle_point: -149
+IRRim::follow::left coordinate: (633, 335, 1), right coordinate: (516, 420, 1)
+distance = -58.2059 filtered = 35.4826
+IRRim::follow::middle_point: -148
+IRRim::follow::left coordinate: (632, 335, 1), right coordinate: (516, 420, 1)
+distance = -58.2059 filtered = 35.4826
+IRRim::follow::middle_point: -148
+IRRim::follow::left coordinate: (632, 335, 1), right coordinate: (516, 420, 1)
+distance = -57.7084 filtered = 35.4826
+IRRim::follow::middle_point: -149
+IRRim::follow::left coordinate: (633, 335, 1), right coordinate: (516, 420, 1)
+IRRim::follow::Target lost, going back to seeking
+

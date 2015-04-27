@@ -7,7 +7,7 @@
 
 // #define IR_RIM_DEBUG
 // #define QUICK_IR_RIM_DEBUG
-// #define LOCALATION_DEBUG
+#define LOCALATION_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+0))
@@ -115,7 +115,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::IRRim::Initializing sensor No. " << i + 1 << endl;
 			#endif
-			mux.selectChannel(PV_N(i));
+			if (i == 0) {
+				cout << "Init sensor 0 to 0x20" << endl;
+				mux.selectChannel(0x20);
+			} else {
+
+				cout << "Init sensor " << i << " to " << PV_N(i) << endl;
+				mux.selectChannel(PV_N(i));
+			}
 			if (!sensors[i].init()) {
 				cerr << "IRRim::IRRim::Sensor No. " << i + 1 << " not initialized correctly" << endl;
 				continue;
@@ -124,6 +131,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			cout << "IRRim::IRRim::Sensor No. " << i + 1 << " done." << endl;
 			#endif
 		}
+		// mux.selectChannel(PV_N(7));
+		// if (!sensors[0].init()) {
+		// 	cerr << "IRRim::IRRim::Sensor No. " << 7 + 1 << " not initialized correctly" << endl;
+		// 	continue;
+		// }
+		// #ifdef IR_RIM_DEBUG
+		// cout << "IRRim::IRRim::Sensor No. " << 7 + 1 << " done." << endl;
+		// #endif
 		PVision_inited = true;
 	}
 	if (!PVision_inited) {
@@ -254,8 +269,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			middle_point = -left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is on left" << endl;
-			cout << "IRRim::follow::Left middle_point: " << middle_point << endl;;
-			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
+			// cout << "IRRim::follow::Left middle_point: " << middle_point << endl;;
+			// cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 			#endif
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
@@ -267,8 +282,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			middle_point = FULL_HORIZONTAL - right_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is on right" << endl;
-			cout << "IRRim::follow::Right middle_point: " << middle_point;
-			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;;
+			// cout << "IRRim::follow::Right middle_point: " << middle_point;
+			// cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;;
 			#endif
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
@@ -414,7 +429,7 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	            cerr << "Under flow happened in sensor 1" << endl;
 	            throw e;
 	        }
-			mux.selectChannel(PV_N(0));
+			mux.selectChannel(0x20);
 			try {
 				result2 = sensors[0].readBlob();
 			} catch (naughty_exception e) {
@@ -563,7 +578,7 @@ inline double IRRim::calculate_target_coordinate(int left_x, int right_x) {
 	#ifdef LOCALATION_DEBUG
 	// cout << "left_x is " << left_x << " alpha is " << alpha << " in degrees: " << alpha * 180 / PI << endl;
 	// cout << "right_x is " << right_x << " beta is " << beta << " in degrees: " << beta * 180 / PI << endl;
-	cout << "distance = " << distance << " filtered = " << filtered << endl;;
+	cout << "IRRim::calculate_target_coordinate::distance = " << distance << " filtered = " << filtered << endl;;
 	#endif
 	return filtered;
 }
@@ -579,9 +594,9 @@ double IRRim::filtered_result(double distance) {
 		avg = distance;
 		return distance;
 	} else {
-		avg *= 0.98;
-		avg += 0.02 * distance;
-		if (fabs(avg - distance) > 30) {
+		avg *= 0.99;
+		avg += 0.01 * distance;
+		if (fabs(avg - distance) > 5) {
 			return avg;
 		} else {
 			return distance;
