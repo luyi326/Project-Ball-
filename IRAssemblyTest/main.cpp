@@ -30,6 +30,22 @@ void sig_handler(int signo)
     }
 }
 
+string ZeroPadNumber(int num)
+{
+    stringstream ss;
+
+    // the number is converted to string with the help of stringstream
+    ss << num;
+    string ret;
+    ss >> ret;
+
+    // Append zero chars
+    int str_length = ret.length();
+    for (int i = 0; i < 9 - str_length; i++)
+        ret = "0" + ret;
+    return ret;
+}
+
 int main (int argc, char* argv[]) {
     // Register sigint
     if (signal(SIGINT, sig_handler) == SIG_ERR) {
@@ -63,6 +79,8 @@ int main (int argc, char* argv[]) {
 
             int lost_count = 0;
             for(;;) {
+                timespec start;
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
                 int angle_bias = 0;
                 IR_target target;
 
@@ -89,7 +107,7 @@ int main (int argc, char* argv[]) {
                 rim->run();
                 target = rim->run();
 
-                if (target.distance < -2) target.distance = -target.distance;
+                // if (target.distance < -2) target.distance = -target.distance;
                 if (target.target_located && target.distance > 20) {
                     lost_count = 0;
                     bool left_or_right = true;
@@ -119,6 +137,7 @@ int main (int argc, char* argv[]) {
                         exit(0);
                     } else {
                         // freq = (target.distance - 20) * 100 + 100;
+                        // if (target.distance > )
                         freq = 5700;
                         cout << "MAIN::distance = " << target.distance << " new freq = " << freq << endl;
                         if (forward) {
@@ -162,13 +181,24 @@ int main (int argc, char* argv[]) {
                         lost_count++;
                         continue;
                     }
-                    motorPair->setAcceleration(200);
+                    motorPair->setAcceleration(300);
                     motorPair->moveForward(100);
                     rim->force_seek();
                     if (target.target_located) {
                         cout << "MAIN::Target located but distance is too short" << endl;
                     }
                 }
+                timespec stop;
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
+                timespec temp;
+                if ((stop.tv_nsec-start.tv_nsec)<0) {
+                    temp.tv_sec = stop.tv_sec-start.tv_sec-1;
+                    temp.tv_nsec = 1000000000+stop.tv_nsec-start.tv_nsec;
+                } else {
+                    temp.tv_sec = stop.tv_sec-start.tv_sec;
+                    temp.tv_nsec = stop.tv_nsec-start.tv_nsec;
+                }
+                cout << temp.tv_sec << "." << ZeroPadNumber(temp.tv_nsec) << endl;
             }
         } catch (...) {
             clean_up();

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <unistd.h>
 #include <ctime>
 #include "../PVision/PCA9548A.h"
@@ -7,20 +8,40 @@
 using namespace std;
 using namespace BlackLib;
 
+string ZeroPadNumber(int num)
+{
+	stringstream ss;
+
+	// the number is converted to string with the help of stringstream
+	ss << num;
+	string ret;
+	ss >> ret;
+
+	// Append zero chars
+	int str_length = ret.length();
+	for (int i = 0; i < 9 - str_length; i++)
+		ret = "0" + ret;
+	return ret;
+}
+
 int main (int argc, char* argv[]) {
 	PCA9548A mux(GPIO_48);
 	PVision v1, v2;
-	mux.selectChannel(0x04);
+    unsigned int number = 0x00;
+    if (argc >= 2) {
+        number = atoi(argv[1]);
+    }
+	mux.selectChannel(number);
 	v1.init();
-	mux.selectChannel(0x08);
-	v2.init();
+	// mux.selectChannel(0x08);
+	// v2.init();
 
 	while (1) {
 		// cout << "Try read blob" << endl;
 		timespec start;
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
 
-		mux.selectChannel(0x04);
+		mux.selectChannel(number);
 		uint8_t result = v1.readBlob();
 		// cout << "Raw result = " << result << endl;
 		cout << std::dec;
@@ -29,14 +50,14 @@ int main (int argc, char* argv[]) {
 			cout << "v1 BLOB1 detected. X:" << v1.Blob1.X << " Y:" << v1.Blob1.Y;
 			cout << " Size: " << v1.Blob1.Size << endl;
 		}
-		mux.selectChannel(0x08);
-		result = v2.readBlob();
-		// cout << "Raw result = " << result << endl;
-		// cout << std::dec;
-		if (result & BLOB1)
+		// mux.selectChannel(0x08);
+		// result = v2.readBlob();
+		// // cout << "Raw result = " << result << endl;
+		// // cout << std::dec;
+		if (result & BLOB2)
 		{
-			cout << "v2 BLOB1 detected. X:" << v2.Blob1.X << " Y:" << v2.Blob1.Y;
-			cout << " Size: " << v2.Blob1.Size << endl;
+			cout << "v1 BLOB2 detected. X:" << v1.Blob1.X << " Y:" << v1.Blob1.Y;
+			cout << " Size: " << v1.Blob1.Size << endl;
 		}
 
 		// if (result & BLOB2)
@@ -65,7 +86,7 @@ int main (int argc, char* argv[]) {
 			temp.tv_sec = stop.tv_sec-start.tv_sec;
 			temp.tv_nsec = stop.tv_nsec-start.tv_nsec;
 		}
-		cout << temp.tv_sec << "." << temp.tv_nsec << endl;
+		cout << temp.tv_sec << "." << ZeroPadNumber(temp.tv_nsec) << endl;
 		usleep(5000);
 
 	}

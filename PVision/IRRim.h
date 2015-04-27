@@ -7,6 +7,7 @@
 #include "PVision.h"
 #include "PCA9548A.h"
 #include "vec.h"
+// #include "ringBuf.h"
 #include "../BlackLib/BlackCore.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "../BlackLib/BlackPWM.h"
@@ -59,7 +60,7 @@ typedef struct {
 typedef struct {
 	bool target_located;
 	int angle; //clockwise, up front is 0 degrees
-	float distance; // distance in cm
+	double distance; // distance in cm
 } IR_target;
 ostream& operator<<(ostream& os, const IR_target& t);
 
@@ -107,7 +108,7 @@ private:
 	PVision* sensors;
 	BlackServo servo;
 	uint8_t sensor_count;
-	IRRimState state;
+	IRRimState seeking_state;
 	IRSensorPair current_active_pair;
 	timespec target_last_seen;
 	int current_iteration;
@@ -115,26 +116,31 @@ private:
 	int current_upper_bound;
 
 	float servo_current_position;
-	bool is_seeking;
+	// bool is_seeking;
 	bool seeking_is_upwared;
 	IR_target dummy_target;
 	IR_target last_target;
+	bool should_reverse;
 
 	const vec o_left;
 	const vec o_right;
 	const vec o_left_m_right;
+
+	// TFRingBuffer<double> distance_list;
 
 	void nextSensor();
 	void select(uint8_t num);
 	void seek();
 	IR_target follow(IRSensorPair);
 	void reverse();
+	void inspect_sensors();
+	double filtered_result(double distance);
 
 	inline void validateBlob(uint8_t index_left, uint8_t index_right);
 
 	// inline timespec time_diff(timespec t1, timespec t2);
 
-	inline vec calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y);
+	inline double calculate_target_coordinate(int left_x, int right_x);
 	inline vec get_directional_vec(int x, int y);
 	inline void calculate_intersection_point(vec directional_left, vec directional_right, float& z_left, float& z_right);
 };

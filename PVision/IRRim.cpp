@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctime>
+#include <cmath>
 #include "BlobCompare.h"
 
 // #define IR_RIM_DEBUG
 // #define QUICK_IR_RIM_DEBUG
+#define LOCALATION_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
 #define PV_N(n) (1 << (n+0))
@@ -15,7 +17,7 @@
 
 #define PVISION_MAX_ATTEMPT (5)
 
-#define FULL_HORIZONTAL (1024)
+#define FULL_HORIZONTAL (1000)
 #define FULL_VERTICAL (750)
 #define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
 #define HALF_VERTICAL (FULL_VERTICAL/2)
@@ -24,11 +26,13 @@
 
 #define FULL_D_SENSOR (4.0f)
 #define HALF_D_SENSOR (FULL_D_SENSOR/2)
+#define PI (3.14159265)
+#define HALF_PI (1.57079632)
 #define TAN_16_5 (0.29621349496)
 #define TAN_11_5 (0.20345229942)
 
-#define SERVO_SEEK_TOLERANCE 0.05f
-#define SERVO_FOLLOW_TOLERANCE 0.10f
+#define SERVO_SEEK_TOLERANCE (0.05f)
+#define SERVO_FOLLOW_TOLERANCE (0.10f)
 
 
 float PID_kernel(PID_IRRim& pid, float error, float position);
@@ -76,19 +80,20 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 	mux(muxResetPin),
 	servo(servoPin, feedbackPin),
 	sensor_count(0),
-	state(IRRimState_seeking),
+	seeking_state(IRRimState_seeking),
 	current_active_pair(IRSensorPairInvalid),
 	current_iteration(0),
 	current_lower_bound(0),
 	current_upper_bound(180),
 	servo_current_position(0),
-	is_seeking(true),
 	seeking_is_upwared(true),
 	dummy_target({false, 0, 0.0f}),
 	last_target({false, 0, 0.0f}),
+	should_reverse(false),
 	o_left(-HALF_D_SENSOR, 0, 0),
 	o_right(HALF_D_SENSOR, 0, 0),
-	o_left_m_right(-FULL_D_SENSOR, 0, 0)
+	o_left_m_right(-FULL_D_SENSOR, 0, 0)//,
+	// distance_list(100)
 	{
 	if (num_of_sensors > 6) {
 		cerr << "IRRim::IRRim::Number of sensors is " << num_of_sensors << ", maximum is 6" << endl;
@@ -110,7 +115,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::IRRim::Initializing sensor No. " << i + 1 << endl;
 			#endif
-			mux.selectChannel(PV_N(i));
+			if (i == 0) {
+				cout << "Init sensor 0 to 0x20" << endl;
+				mux.selectChannel(0x20);
+			} else {
+
+				cout << "Init sensor " << i << " to " << PV_N(i) << endl;
+				mux.selectChannel(PV_N(i));
+			}
 			if (!sensors[i].init()) {
 				cerr << "IRRim::IRRim::Sensor No. " << i + 1 << " not initialized correctly" << endl;
 				continue;
@@ -119,6 +131,14 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			cout << "IRRim::IRRim::Sensor No. " << i + 1 << " done." << endl;
 			#endif
 		}
+		// mux.selectChannel(PV_N(7));
+		// if (!sensors[0].init()) {
+		// 	cerr << "IRRim::IRRim::Sensor No. " << 7 + 1 << " not initialized correctly" << endl;
+		// 	continue;
+		// }
+		// #ifdef IR_RIM_DEBUG
+		// cout << "IRRim::IRRim::Sensor No. " << 7 + 1 << " done." << endl;
+		// #endif
 		PVision_inited = true;
 	}
 	if (!PVision_inited) {
@@ -149,18 +169,23 @@ void IRRim::reset() {
 }
 
 IR_target IRRim::run() {
-	if (is_seeking) {
-		seek();
-		return dummy_target;
-	} else {
-		return follow(current_active_pair);
+	switch (seeking_state) {
+		case IRRimState_seeking:
+			seek();
+			return dummy_target;
+		case IRRimState_targetFound:
+			return follow(current_active_pair);
+		case IRRimState_reversing:
+			reverse();
+			return last_target;
 	}
+	return dummy_target;
 }
 
 
 void IRRim::force_seek() {
-	if (is_seeking) return;
-	is_seeking = true;
+	if (seeking_state == IRRimState_seeking) return;
+	seeking_state = IRRimState_seeking;
 	servo_current_position = 0;
 	current_active_pair = IRSensorPairInvalid;
 	servo.set_tolerance(SERVO_SEEK_TOLERANCE);
@@ -168,10 +193,7 @@ void IRRim::force_seek() {
 }
 
 void IRRim::seek() {
-	// if (servo_current_position < 180) servo_current_position = 0;
-	// else servo_current_position = 180;
-	// cout << "Seeking to position " << (int)(servo_current_position) << endl;
-	static timespec last_arrive_time;
+	// static timespec last_arrive_time;
 	servo.move_to(servo_current_position);
 	if (servo.target_position_reached()) {
 		if (abs(servo_current_position - static_cast<float>(current_lower_bound)) < 0.00001) {
@@ -181,7 +203,7 @@ void IRRim::seek() {
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::seek::Moving to " << int(current_upper_bound) << endl;
 			#endif
-			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
+			// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
 		} else {
 			servo_current_position = current_lower_bound;
 			if (current_upper_bound < 180) current_upper_bound += 10;
@@ -189,29 +211,10 @@ void IRRim::seek() {
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::seek::Moving to " << int(current_lower_bound) << endl;
 			#endif
-			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
+			// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_arrive_time);
 		}
 	}
-
-	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
-		servo_current_position = (int)servo.current_position();
-		#ifdef IR_RIM_DEBUG
-		cout << "IRRim::seek::Saw a target on front, entering follow mode" << endl;
-		cout << "IRRim::seek::Servo redirecting to " << int(servo_current_position) << endl;
-		#endif
-		is_seeking = false;
-		current_active_pair = IRSensorPairFront;
-		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
-	} else if (read_IR(IRSensorPairBack) != IRReadResultLost) {
-		servo_current_position = (int)servo.current_position();
-		#ifdef IR_RIM_DEBUG
-		cout << "IRRim::seek::Saw a target on back, entering follow mode" << endl;
-		cout << "IRRim::seek::Servo redirecting to " << int(servo_current_position) << endl;
-		#endif
-		is_seeking = false;
-		current_active_pair = IRSensorPairBack;
-		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
-	}
+	inspect_sensors();
 	servo.move_to(servo_current_position);
 }
 
@@ -228,7 +231,7 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	try {
 		ir_state = read_IR(following_pair, &left_avg, &right_avg);
 	} catch (const std::ios_base::failure& e) {
-        cerr << "Under flow happened in read_IR" << endl;
+        cerr << "IRRim::follow::Underflow happened in read_IR" << endl;
         throw e;
     }
 	// cout << "left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
@@ -254,7 +257,7 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 				#ifdef QUICK_IR_RIM_DEBUG
 				cout << "IRRim::follow::Target lost, going back to seeking" << endl;
 				#endif
-				is_seeking = true;
+				seeking_state = IRRimState_seeking;
 				current_active_pair = IRSensorPairInvalid;
 				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 				servo_current_position = 0;
@@ -266,8 +269,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			middle_point = -left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is on left" << endl;
-			cout << "IRRim::follow::Left middle_point: " << middle_point;
-			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
+			// cout << "IRRim::follow::Left middle_point: " << middle_point << endl;;
+			// cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 			#endif
 			// cout << "Servo moving clockwise" << endl;
 			// exit(0);
@@ -279,8 +282,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			middle_point = FULL_HORIZONTAL - right_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is on right" << endl;
-			cout << "IRRim::follow::Right middle_point: " << middle_point;
-			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;;
+			// cout << "IRRim::follow::Right middle_point: " << middle_point;
+			// cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;;
 			#endif
 			// cout << "Servo moving counterclockwise" << endl;
 			// exit(0);
@@ -289,18 +292,21 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			new_target.distance = -1.0f;
 			break;
 		case IRReadResultMiddle:
-			vec target_location = calculate_target_coordinate(left_avg.X, left_avg.Y, right_avg.X, right_avg.Y);
+			double target_distance = calculate_target_coordinate(left_avg.X, right_avg.X);
 			middle_point = FULL_HORIZONTAL - right_avg.X - left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
 			// cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
 			// cout << "Target location: " << target_location << endl;
-			cout << "IRRim::follow::middle_point: " << middle_point;
+			cout << "IRRim::follow::middle_point: " << middle_point << endl;
 			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
+			#endif
+			#ifdef LOCALATION_DEBUG
+			// cout << "IRRIM::follow::left_avg is " << left_avg << " right_avg is " << right_avg << " target_location is " << target_location << endl;
 			#endif
 			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &target_last_seen);
 			new_target.angle = servo.current_position();
-			new_target.distance = - target_location.z;
+			new_target.distance = target_distance;
 		break;
 	}
 
@@ -341,11 +347,62 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 	servo_current_position = servo.current_position() - correct;
 	// servo_current_position = (int)servo.current_position();
 	//add error output to servo
-	if (servo_current_position < 0) servo_current_position = 0;
-	if (servo_current_position > 180) servo_current_position = 180;
+	if (servo_current_position < 0) {
+		servo_current_position = 0;
+		seeking_state = IRRimState_reversing;
+		should_reverse = true;
+	}
+	if (servo_current_position > 180) {
+		servo_current_position = 180;
+		seeking_state = IRRimState_reversing;
+		should_reverse = true;
+	}
 	servo.move_to(servo_current_position);
 
 	return new_target;
+}
+
+void IRRim::reverse() {
+	#ifdef IR_RIM_DEBUG
+	cout << "IRRim::reverse::Reversing" << endl;
+	#endif
+	//if the current position is floating 0
+	if (should_reverse) {
+		if (abs(servo_current_position) < 0.00001) {
+			servo_current_position = 180;
+		} else {
+			servo_current_position = 0;
+		}
+		should_reverse = false;
+	} else {
+		if (servo.target_position_reached()) {
+			seeking_state = IRRimState_seeking;
+		}
+	}
+	inspect_sensors();
+	servo.move_to(servo_current_position);
+}
+
+void IRRim::inspect_sensors() {
+	if (read_IR(IRSensorPairFront) != IRReadResultLost) {
+		servo_current_position = (int)servo.current_position();
+		#ifdef IR_RIM_DEBUG
+		cout << "IRRim::seek::Saw a target on front, entering follow mode" << endl;
+		cout << "IRRim::seek::Servo redirecting to " << int(servo_current_position) << endl;
+		#endif
+		seeking_state = IRRimState_targetFound;
+		current_active_pair = IRSensorPairFront;
+		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
+	} else if (read_IR(IRSensorPairBack) != IRReadResultLost) {
+		servo_current_position = (int)servo.current_position();
+		#ifdef IR_RIM_DEBUG
+		cout << "IRRim::seek::Saw a target on back, entering follow mode" << endl;
+		cout << "IRRim::seek::Servo redirecting to " << int(servo_current_position) << endl;
+		#endif
+		seeking_state = IRRimState_targetFound;
+		current_active_pair = IRSensorPairBack;
+		servo.set_tolerance(SERVO_FOLLOW_TOLERANCE);
+	}
 }
 
 IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg) {
@@ -372,7 +429,7 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	            cerr << "Under flow happened in sensor 1" << endl;
 	            throw e;
 	        }
-			mux.selectChannel(PV_N(0));
+			mux.selectChannel(0x20);
 			try {
 				result2 = sensors[0].readBlob();
 			} catch (naughty_exception e) {
@@ -490,28 +547,61 @@ inline void validateBlob(uint8_t index_left, uint8_t index_right) {
 
 //Z positioning algos starts here
 
-inline vec IRRim::calculate_target_coordinate(int left_x, int left_y, int right_x, int right_y) {
-	vec dir_left = get_directional_vec(left_x, left_y);
-	vec dir_right = get_directional_vec(right_x, right_y);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::directional left: " << dir_left << endl;
-	cout << "IRRim::calculate_target_coordinate::directional right: " << dir_right << endl;
+inline double IRRim::calculate_target_coordinate(int left_x, int right_x) {
+	// vec dir_left = get_directional_vec(left_x, left_y);
+	// vec dir_right = get_directional_vec(right_x, right_y);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::directional left: " << dir_left << endl;
+	// cout << "IRRim::calculate_target_coordinate::directional right: " << dir_right << endl;
+	// #endif
+	// float z_left, z_right;
+	// calculate_intersection_point(dir_left, dir_right, z_left, z_right);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::z_left = " << z_left << " z_right = " << z_right << endl;
+	// #endif
+	// vec s_C = o_left + (dir_left * z_left);
+	// vec t_C = o_right + (dir_right * z_right);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::s_C = " << s_C << " t_C = " << t_C << endl;
+	// #endif
+	// vec mid = vec::mid_point(s_C, t_C);
+	// #ifdef IR_RIM_DEBUG
+	// cout << "IRRim::calculate_target_coordinate::mid = " << mid << endl;
+	// #endif
+	// return mid;
+	double alpha = HALF_PI - atan(static_cast<double>(HALF_HORIZONTAL - left_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double beta = HALF_PI + atan(static_cast<double>(HALF_HORIZONTAL - right_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double tan_alpha = tan(alpha);
+	double tan_beta = tan(beta);
+	double distance = tan_alpha * tan_beta / (tan_alpha + tan_beta) * FULL_D_SENSOR;
+	double filtered = filtered_result(distance);
+	#ifdef LOCALATION_DEBUG
+	// cout << "left_x is " << left_x << " alpha is " << alpha << " in degrees: " << alpha * 180 / PI << endl;
+	// cout << "right_x is " << right_x << " beta is " << beta << " in degrees: " << beta * 180 / PI << endl;
+	cout << "IRRim::calculate_target_coordinate::distance = " << distance << " filtered = " << filtered << endl;;
 	#endif
-	float z_left, z_right;
-	calculate_intersection_point(dir_left, dir_right, z_left, z_right);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::z_left = " << z_left << " z_right = " << z_right << endl;
-	#endif
-	vec s_C = o_left + (dir_left * z_left);
-	vec t_C = o_right + (dir_right * z_right);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::s_C = " << s_C << " t_C = " << t_C << endl;
-	#endif
-	vec mid = vec::mid_point(s_C, t_C);
-	#ifdef IR_RIM_DEBUG
-	cout << "IRRim::calculate_target_coordinate::mid = " << mid << endl;
-	#endif
-	return mid;
+	return filtered;
+}
+
+double IRRim::filtered_result(double distance) {
+	static bool initial = true;
+	static double avg = 0;
+	if (distance < 0) {
+		return avg;
+	}
+	if (initial) {
+		initial = false;
+		avg = distance;
+		return distance;
+	} else {
+		avg *= 0.99;
+		avg += 0.01 * distance;
+		if (fabs(avg - distance) > 5) {
+			return avg;
+		} else {
+			return distance;
+		}
+	}
 }
 
 inline vec IRRim::get_directional_vec(int x, int y) {
