@@ -60,6 +60,14 @@ uint8_t I2CBase::readByte(uint8_t reg) {
 	return value;
 }
 
+uint8_t I2CBase::readByte() {
+	if (read(i2cDescriptor, &value, 1) != 1) {
+		cerr << "Can not read data. Address 0x" << hex << (int)address << "." << dec << endl;
+		return 0;
+	}
+	return value;
+}
+
 void I2CBase::writeReg(uint8_t reg, uint8_t value) {
 	if (!busReady) {
 		cerr << "Bus not ready!" << endl;
@@ -79,6 +87,39 @@ void I2CBase::writeByte(uint8_t value) {
 	}
 
 	if (write(i2cDescriptor, &value, 1) != 1) {
+		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
+	}
+}
+
+uint16_t I2CBase::readDoubleByte(uint8_t reg) {
+	if (!busReady) {
+		cerr << "Bus not ready!" << endl;
+		return 0;
+	}
+
+	if (write(i2cDescriptor, &reg, 1) != 1) {
+		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
+		return 0;
+	}
+
+	uint8_t value[2];
+
+	if (read(i2cDescriptor, &value, 2) != 2) {
+		cerr << "Can not read data. Address 0x" << hex << (int)address << "." << dec << endl;
+		return 0;
+	}
+	uint16_t rtnValue = (value[0] << 8) | value[1];
+	return rtnValue;
+}
+
+void I2CBase::writeReg(uint8_t reg, uint16_t value) {
+	if (!busReady) {
+		cerr << "Bus not ready!" << endl;
+		return;
+	}
+
+	uint8_t buffer[3] = {reg, value >> 8, value & 0xFF};
+	if (write(i2cDescriptor, buffer, 3) != 3) {
 		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
 	}
 }

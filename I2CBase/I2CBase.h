@@ -12,9 +12,14 @@ public:
 	I2CBase(string busName, uint8_t address);
 	~I2CBase();
 	bool isBusReady();
+	uint8_t readByte();
+
 	uint8_t readByte(uint8_t reg);
 	void writeReg(uint8_t reg, uint8_t value);
 	void writeByte(uint8_t value);
+
+	uint16_t readDoubleByte(uint8_t reg);
+	void writeReg(uint8_t reg, uint16_t value);
 protected:
 	uint8_t address;
 private:
