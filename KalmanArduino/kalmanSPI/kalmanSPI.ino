@@ -29,6 +29,7 @@
 #include "pins_arduino.h"
 
 #define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
+#define LED_PIN 13
 // #define KALMAN_DEBUG
 
 Kalman kalmanX, kalmanY, kalmanZ; // Create the Kalman instances
@@ -129,6 +130,17 @@ ISR (SPI_STC_vect) {
 
 void setup() {
   delay(100); // Wait for sensors to get ready
+
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+  delay(100);
+  digitalWrite(LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(LED_PIN, LOW);
+  delay(100);
+  digitalWrite(LED_PIN, HIGH);
+  delay(100);
+  digitalWrite(LED_PIN, LOW);
 
   //SPI setup
   // have to send on master in, *slave out*
@@ -292,15 +304,13 @@ void loop() {
   Serial.print(magX); Serial.print("\t"); // After gain and offset compensation
   Serial.print(magY); Serial.print("\t");
   Serial.print(magZ); Serial.print("\t");
-#endif
-#ifdef KALMAN_DEBUG
   Serial.print("\t");
 
   double temperature = (double)tempRaw / 340.0 + 36.53;
   Serial.print(temperature); Serial.print("\t");
+  Serial.println();
 #endif
 
-  //Serial.println();
 
   delay(10);
 }

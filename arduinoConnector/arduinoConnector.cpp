@@ -7,18 +7,22 @@
 using namespace std;
 
 
-arduinoConnector::arduinoConnector(spiName port) : spi(port, 8, SpiDefault, 2400000) {
+arduinoConnector::arduinoConnector(spiName port) :
+spi(port, 8, SpiDefault, 2400000),
+reset_enabled(false)
+{
 	spi.open(ReadWrite);
 	usleep(100);
-	// uint8_t writeData = 'a';
-	// for (int i = 0; i < 10; i++) {
-	// 	char stuff = spi.transfer(writeData, 1);
-	// 	cout << "$" << writeData << "$ $" << stuff << "$" << endl;
-	// 	writeData++;
-	// 	usleep(100000);
-	// }
-	// char stuff = spi.transfer('\n', 1);
-	// cout << "$" << writeData << "$ $" << stuff << "$" << endl;
+}
+
+arduinoConnector::arduinoConnector(spiName port, gpioName reset) :
+spi(port, 8, SpiDefault, 2400000),
+reset_pin(reset_pin_name, output, SecureMode) ,
+reset_enabled(true)
+{
+	spi.open(ReadWrite);
+	usleep(100);
+	reset();
 }
 
 float arduinoConnector::angleInfomation(arduinoConnectorKalmanAngle axis) {
@@ -55,4 +59,13 @@ float arduinoConnector::angleInfomation(arduinoConnectorKalmanAngle axis) {
 	// printf("int: 0x%X\n", resultInt);
 	rtnValue = (float*)(&resultInt);
 	return *rtnValue;
+}
+
+void reset() {
+	if (!reset_enabled) {
+		return;
+	}
+	reset_pin.setValue((digitalValue)0);
+	usleep(200);
+	reset_pin.setValue((digitalValue)1);
 }

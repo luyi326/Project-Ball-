@@ -100,7 +100,7 @@ Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress) : I2CBase(I2C_BUS_NAME, i
     @brief  Instantiates a new ADS1115 class w/appropriate properties
 */
 /**************************************************************************/
-Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
+Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress) : Adafruit_ADS1015(i2cAddress)
 {
    m_i2cAddress = i2cAddress;
    m_conversionDelay = ADS1115_CONVERSIONDELAY;
