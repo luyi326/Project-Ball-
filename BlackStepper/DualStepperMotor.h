@@ -5,12 +5,18 @@
 #include "../BlackLib/BlackPWM.h"
 #include "../BlackLib/BlackGPIO.h"
 #include "BlackStepper.h"
+#include "../PID/PID.h"
+#include "../arduinoConnector.h"
 using namespace BlackLib;
+
+#define STEPPER_BALANCING_ON
 
 class DualStepperMotor {
 private:
 	BlackStepper leftStepper;
 	BlackStepper rightStepper;
+	arduinoConnector kalduino;
+	PID pid;
 	unsigned int turn_bias;
 
 public:
@@ -18,7 +24,9 @@ public:
 		gpioName directionLeft,
 		pwmName frequencyLeft,
 		gpioName directionRight,
-		pwmName frequencyRight
+		pwmName frequencyRight,
+		spiName kalman_spi_name,
+		gpioName kalman_reset_pin_name
 	);
 
 	void moveForward(unsigned int frequency);

@@ -1,17 +1,22 @@
 #include "DualStepperMotor.h"
 #include <ctime>
-
 #include <iostream>
+
 using namespace std;
 
 DualStepperMotor::DualStepperMotor(
 		gpioName directionLeft,
 		pwmName frequencyLeft,
 		gpioName directionRight,
-		pwmName frequencyRight
+		pwmName frequencyRight,
+		spiName kalman_spi_name,
+		gpioName kalman_reset_pin_name
 	) :
 	leftStepper(directionLeft, frequencyLeft),
-	rightStepper(directionRight, frequencyRight) {
+	rightStepper(directionRight, frequencyRight),
+	kalduino(kalman_spi_name, kalman_reset_pin_name),
+	pid(0.5, 1.0f / 40, 1.0f / 80, 3, 0),
+	turn_bias(0) {
 
 }
 

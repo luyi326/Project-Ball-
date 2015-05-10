@@ -17,8 +17,8 @@ I2CDIR = ../I2CBase/
 PIDDIR = ../PID/
 ARDUINO_DIR = ../arduinoConnector/
 
-BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackSPI.o
-BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackSPI.h
+BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackSPI.o $(OBJDIR)BlackGPIO.o
+BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackSPI.h $(OBJDIR)BlackGPIO.h
 
 
 # MOTOR_OBJ = BlackServo.o BlackStepper.o DualStepperMotor.o

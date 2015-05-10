@@ -15,14 +15,20 @@ reset_enabled(false)
 	usleep(100);
 }
 
-arduinoConnector::arduinoConnector(spiName port, gpioName reset) :
+arduinoConnector::arduinoConnector(spiName port, gpioName reset_pin_name) :
 spi(port, 8, SpiDefault, 2400000),
-reset_pin(reset_pin_name, output, SecureMode) ,
 reset_enabled(true)
 {
 	spi.open(ReadWrite);
 	usleep(100);
+	reset_pin = new BlackGPIO(reset_pin_name, output, SecureMode);
 	reset();
+}
+
+arduinoConnector::~arduinoConnector() {
+	if (reset_enabled) {
+		delete reset_pin;
+	}
 }
 
 float arduinoConnector::angleInfomation(arduinoConnectorKalmanAngle axis) {
@@ -61,11 +67,11 @@ float arduinoConnector::angleInfomation(arduinoConnectorKalmanAngle axis) {
 	return *rtnValue;
 }
 
-void reset() {
+void arduinoConnector::reset() {
 	if (!reset_enabled) {
 		return;
 	}
-	reset_pin.setValue((digitalValue)0);
-	usleep(200);
-	reset_pin.setValue((digitalValue)1);
+	reset_pin->setValue((digitalValue)0);
+	usleep(200 * 1000);
+	reset_pin->setValue((digitalValue)1);
 }

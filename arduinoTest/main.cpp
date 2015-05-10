@@ -5,6 +5,7 @@
 #include "../arduinoConnector/arduinoConnector.h"
 #include "../BlackLib/BlackLib.h"
 #include "../BlackLib/BlackSPI.h"
+#include "../BlackLib/BlackGPIO.h"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR) {
         cerr << "MAIN::Cannot register SIGINT handler" << endl;
     }
-    arduinoConnector arduino(SPI0_0);
+    arduinoConnector arduino(SPI0_0, GPIO_117);
     for (;;) {
     	cout << "kalman X: " << arduino.angleInfomation(arduinoConnector_KalmanX) << endl;
     	cout << "kalman Y: " << arduino.angleInfomation(arduinoConnector_KalmanY) << endl;

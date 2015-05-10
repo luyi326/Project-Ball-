@@ -30,7 +30,7 @@
 
 #define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 #define LED_PIN 13
-// #define KALMAN_DEBUG
+ #define KALMAN_DEBUG
 
 Kalman kalmanX, kalmanY, kalmanZ; // Create the Kalman instances
 
@@ -50,6 +50,7 @@ double compAngleX, compAngleY, compAngleZ; // Calculated angle using a complemen
 double kalAngleX, kalAngleY, kalAngleZ; // Calculated angle using a Kalman filter
 volatile float kalmanTmp = 0;
 volatile uint8_t kalmanSplit[4];
+volatile bool inited = false;
 
 uint32_t timer;
 uint8_t i2cData[14]; // Buffer for I2C data
@@ -68,6 +69,9 @@ double magGain[3];
 
 // SPI interrupt routine
 ISR (SPI_STC_vect) {
+  if (!inited) {
+    SPDR = 0;
+  }
   uint8_t cmd = SPDR;
   int32_t* kalmanInt = NULL;
   switch (cmd) {
@@ -129,18 +133,19 @@ ISR (SPI_STC_vect) {
 }
 
 void setup() {
+  inited = false;
   delay(100); // Wait for sensors to get ready
 
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-  delay(100);
-  digitalWrite(LED_PIN, HIGH);
-  delay(100);
-  digitalWrite(LED_PIN, LOW);
-  delay(100);
-  digitalWrite(LED_PIN, HIGH);
-  delay(100);
-  digitalWrite(LED_PIN, LOW);
+//  pinMode(LED_PIN, OUTPUT);
+//  digitalWrite(LED_PIN, LOW);
+//  delay(20);
+//  digitalWrite(LED_PIN, HIGH);
+//  delay(20);
+//  digitalWrite(LED_PIN, LOW);
+//  delay(20);
+//  digitalWrite(LED_PIN, HIGH);
+//  delay(20);
+//  digitalWrite(LED_PIN, LOW);
 
   //SPI setup
   // have to send on master in, *slave out*
@@ -191,6 +196,7 @@ void setup() {
   compAngleZ = yaw;
 
   timer = micros(); // Initialize the timer
+  inited = true;
 }
 
 void loop() {
@@ -403,3 +409,4 @@ void calibrateMag() { // Inspired by: https://code.google.com/p/open-headtracker
   Serial.println(magGain[2]);
 #endif
 }
+

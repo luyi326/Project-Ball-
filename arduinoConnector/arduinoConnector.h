@@ -16,12 +16,13 @@ typedef enum {
 class arduinoConnector {
 public:
 	arduinoConnector(spiName port);
-	arduinoConnector(spiName port, gpioName reset);
+	arduinoConnector(spiName port, gpioName reset_pin_name);
+	~arduinoConnector();
 	float angleInfomation(arduinoConnectorKalmanAngle axis);
 	void reset();
 private:
 	BlackSPI spi;
-	BlackGPIO reset_pin;
+	BlackGPIO* reset_pin;
 	bool reset_enabled;
 };
 
