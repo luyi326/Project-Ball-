@@ -6,7 +6,7 @@
 using namespace std;
 
 #define ZERO_ERR (0.0000001)
-#define LEVEL (-2.1)
+#define LEVEL (-2.612)
 
 DualStepperMotor::DualStepperMotor(
 		gpioName directionLeft,
@@ -19,7 +19,7 @@ DualStepperMotor::DualStepperMotor(
 	leftStepper(directionLeft, frequencyLeft),
 	rightStepper(directionRight, frequencyRight),
 	kalduino(kalman_spi_name, kalman_reset_pin_name),
-	pid(0.5, 1.0f / 40, 1.0f / 80, 20, -20),
+	pid(0.2, 1.0f / 40, 0.0f, 20, -20),
 	turn_bias(0),
 	row_adjust (0) {
 	float test_x_val = NAN;
@@ -34,37 +34,43 @@ DualStepperMotor::~DualStepperMotor() {
 }
 
 void DualStepperMotor::adjustBalance() {
+	cout << "Adjusting balance" << endl;
 	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX);
-	float kernel = pid.(degree - LEVEL, degree);
+	float kernel = pid.kernel(degree - LEVEL, degree);
+	cout << "Degree: " << degree << " error: " << degree - LEVEL << " kernel: " << kernel << endl;
 }
 
 //Public functions
 
 
 void DualStepperMotor::moveForward(unsigned int frequency) {
+	adjustBalance();
 	leftStepper.run(1, frequency);
 	rightStepper.run(0, frequency);
 }
 
 void DualStepperMotor::moveBackward(unsigned int frequency) {
+	adjustBalance();
 	leftStepper.run(0, frequency);
 	rightStepper.run(1, frequency);
 }
 
 
 void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
+	adjustBalance();
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
 }
 
 void DualStepperMotor::setBias(int bias) {
+	adjustBalance();
 	turn_bias = bias;
 	leftStepper.setBias(-bias);
 	rightStepper.setBias(bias);
 }
 
 void DualStepperMotor::run() {
-	cout << kalduino.angleInfomation(arduinoConnector_KalmanX) << endl;
+	adjustBalance();
 	leftStepper.run();
 	rightStepper.run();
 }

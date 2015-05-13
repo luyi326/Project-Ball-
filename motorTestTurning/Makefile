@@ -15,13 +15,19 @@ STEPPERDIR = ../BlackStepper/
 ARDUINO_DIR = ../arduinoConnector/
 PIDDIR = ../PID/
 
+BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackSPI.o
+BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackSPI.h
+
+STEPPER_OBJ = BlackStepper.o DualStepperMotor.o
+STEPPER_HEADER = $(STEPPERDIR)BlackStepper.h $(STEPPERDIR)DualStepperMotor.h
+
 PID_OBJ = PID.o
 PID_HEADER = $(PIDDIR)PID.h
 
 all: $(TARGET)
 
-$(TARGET): $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o BlackStepper.o DualStepperMotor.o arduinoConnector.o $(PID_HEADER) $(PID_OBJ) $(OBJDIR)BlackLib.h $(STEPPERDIR)BlackStepper.h $(STEPPERDIR)DualStepperMotor.h $(OBJDIR)BlackSPI.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp BlackStepper.o DualStepperMotor.o arduinoConnector.o $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackSPI.o $(PID_OBJ)
+$(TARGET): $(OBJDIR) $(BLACK_LIB_OBJ) $(STEPPER_OBJ) arduinoConnector.o $(PID_HEADER) $(PID_OBJ) $(STEPPER_HEADER)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(TARGET) main.cpp $(STEPPER_OBJ) arduinoConnector.o $(BLACK_LIB_OBJ) $(PID_OBJ)
 
 BlackStepper.o: $(STEPPERDIR)BlackStepper.h
 	$(CC) $(CFLAGS) -c $(STEPPERDIR)BlackStepper.cpp
