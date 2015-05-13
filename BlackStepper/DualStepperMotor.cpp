@@ -1,8 +1,12 @@
 #include "DualStepperMotor.h"
 #include <ctime>
+#include <cmath>
 #include <iostream>
 
 using namespace std;
+
+#define ZERO_ERR (0.0000001)
+#define LEVEL (-2.1)
 
 DualStepperMotor::DualStepperMotor(
 		gpioName directionLeft,
@@ -15,14 +19,23 @@ DualStepperMotor::DualStepperMotor(
 	leftStepper(directionLeft, frequencyLeft),
 	rightStepper(directionRight, frequencyRight),
 	kalduino(kalman_spi_name, kalman_reset_pin_name),
-	pid(0.5, 1.0f / 40, 1.0f / 80, 3, 0),
-	turn_bias(0) {
-
+	pid(0.5, 1.0f / 40, 1.0f / 80, 20, -20),
+	turn_bias(0),
+	row_adjust (0) {
+	float test_x_val = NAN;
+	while (isnan(test_x_val) || abs(test_x_val) < ZERO_ERR) {
+		test_x_val = kalduino.angleInfomation(arduinoConnector_KalmanX);
+	}
 }
 
 DualStepperMotor::~DualStepperMotor() {
 	leftStepper.run(0, 100);
 	rightStepper.run(1, 100);
+}
+
+void DualStepperMotor::adjustBalance() {
+	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX);
+	float kernel = pid.(degree - LEVEL, degree);
 }
 
 //Public functions
@@ -51,6 +64,7 @@ void DualStepperMotor::setBias(int bias) {
 }
 
 void DualStepperMotor::run() {
+	cout << kalduino.angleInfomation(arduinoConnector_KalmanX) << endl;
 	leftStepper.run();
 	rightStepper.run();
 }

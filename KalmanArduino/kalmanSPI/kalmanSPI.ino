@@ -30,7 +30,7 @@
 
 #define RESTRICT_PITCH // Comment out to restrict roll to ±90deg instead - please read: http://www.freescale.com/files/sensors/doc/app_note/AN3461.pdf
 #define LED_PIN 13
- #define KALMAN_DEBUG
+// #define KALMAN_DEBUG
 
 Kalman kalmanX, kalmanY, kalmanZ; // Create the Kalman instances
 

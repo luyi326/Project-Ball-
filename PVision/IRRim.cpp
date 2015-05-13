@@ -77,6 +77,8 @@ static PID_IRRim pid_back;
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName feedbackPin) :
+	lowADC(ADS1115_ADDRESS_LOW),
+	highADC(ADS1115_ADDRESS_HIGH),
 	mux(muxResetPin),
 	servo(servoPin, feedbackPin),
 	sensor_count(0),
@@ -131,14 +133,6 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			cout << "IRRim::IRRim::Sensor No. " << i + 1 << " done." << endl;
 			#endif
 		}
-		// mux.selectChannel(PV_N(7));
-		// if (!sensors[0].init()) {
-		// 	cerr << "IRRim::IRRim::Sensor No. " << 7 + 1 << " not initialized correctly" << endl;
-		// 	continue;
-		// }
-		// #ifdef IR_RIM_DEBUG
-		// cout << "IRRim::IRRim::Sensor No. " << 7 + 1 << " done." << endl;
-		// #endif
 		PVision_inited = true;
 	}
 	if (!PVision_inited) {

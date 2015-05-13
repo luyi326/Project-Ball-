@@ -6,6 +6,12 @@
 
 using namespace std;
 
+typedef enum {
+	IR_target_source_camera,
+	IR_target_source_proximity
+
+} IR_target_source;
+
 /**
  * @brief Target information
  *
@@ -19,7 +25,9 @@ typedef struct {
 	bool target_located;
 	bool distance_available;
 	uint16_t angle; //clockwise, up front is 0 degrees
-	float distance; // distance in cm
+	float distance_two_cam; // distance in cm
+	float distance_one_cam;
+	IR_target_source source;
 } IR_target;
 
 ostream& operator<<(ostream& os, const IR_target& t);

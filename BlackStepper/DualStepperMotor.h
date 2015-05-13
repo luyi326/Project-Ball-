@@ -6,7 +6,7 @@
 #include "../BlackLib/BlackGPIO.h"
 #include "BlackStepper.h"
 #include "../PID/PID.h"
-#include "../arduinoConnector.h"
+#include "../arduinoConnector/arduinoConnector.h"
 using namespace BlackLib;
 
 #define STEPPER_BALANCING_ON
@@ -18,6 +18,9 @@ private:
 	arduinoConnector kalduino;
 	PID pid;
 	unsigned int turn_bias;
+	uint8_t row_adjust;
+
+	void adjustBalance();
 
 public:
 	DualStepperMotor(

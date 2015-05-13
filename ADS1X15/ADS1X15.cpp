@@ -64,7 +64,7 @@ void Adafruit_ADS1015::writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t v
   // i2cwrite((uint8_t)(value>>8));
   // i2cwrite((uint8_t)(value & 0xFF));
   // Wire.endTransmission();
-  this->writeRegister(reg, value);
+  this->writeReg(reg, value);
 }
 
 /**************************************************************************/
@@ -188,6 +188,51 @@ uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
 
   // Read the conversion results
   // Shift 12-bit results right 4 bits for the ADS1015
+  return readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
+}
+
+void Adafruit_ADS1015::readADC_prepareChannel(uint8_t channel) {
+  if (channel > 3)
+  {
+    return;
+  }
+
+  // Start with default values
+  uint16_t config = ADS1015_REG_CONFIG_CQUE_NONE    | // Disable the comparator (default val)
+                    ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
+                    ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
+                    ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
+                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
+                    ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
+
+  // Set PGA/voltage range
+  config |= m_gain;
+
+  // Set single-ended input channel
+  switch (channel)
+  {
+    case (0):
+      config |= ADS1015_REG_CONFIG_MUX_SINGLE_0;
+      break;
+    case (1):
+      config |= ADS1015_REG_CONFIG_MUX_SINGLE_1;
+      break;
+    case (2):
+      config |= ADS1015_REG_CONFIG_MUX_SINGLE_2;
+      break;
+    case (3):
+      config |= ADS1015_REG_CONFIG_MUX_SINGLE_3;
+      break;
+  }
+
+  // Set 'start single-conversion' bit
+  config |= ADS1015_REG_CONFIG_OS_SINGLE;
+
+  // Write config register to the ADC
+  writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
+}
+
+uint16_t Adafruit_ADS1015::readADC_readPremaredChannel() {
   return readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
 }
 

@@ -26,10 +26,10 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    motorPair = new DualStepperMotor(GPIO_15, EHRPWM0A, GPIO_47, EHRPWM2B);
+    motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117);
     cout << "Setup concluded" << endl;
 
-    unsigned int freq = 4000;
+    unsigned int freq = 100;
     if (argc >= 2) {
         freq = atoi(argv[1]);
     }
@@ -43,22 +43,20 @@ int main (int argc, char* argv[]) {
     motorPair->moveForward(freq);
     motorPair->setBias(bias);
     motorPair->run();
-    // exit(0);
-    while (!motorPair->targetSpeedReached()) {
-        motorPair->run();
-        usleep(50000);
-    }
-    // cout << "Target reached, break!!!!" << endl;
-    // exit(0);
-    sleep(4);
 
-    motorPair->moveBackward(freq);
-
-    while (!motorPair->targetSpeedReached()) {
+    while (1) {
         motorPair->run();
-        usleep(50000);
+        // while (!motorPair->targetSpeedReached()) {
+        //     usleep(50000);
+        // }
+
+        // motorPair->moveBackward(freq);
+
+        // while (!motorPair->targetSpeedReached()) {
+        //     motorPair->run();
+        //     usleep(50000);
+        // }
     }
-    sleep(4);
 
     delete motorPair;
 	return 0;

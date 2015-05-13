@@ -61,6 +61,7 @@ uint8_t I2CBase::readByte(uint8_t reg) {
 }
 
 uint8_t I2CBase::readByte() {
+	uint8_t value;
 	if (read(i2cDescriptor, &value, 1) != 1) {
 		cerr << "Can not read data. Address 0x" << hex << (int)address << "." << dec << endl;
 		return 0;
@@ -117,8 +118,9 @@ void I2CBase::writeReg(uint8_t reg, uint16_t value) {
 		cerr << "Bus not ready!" << endl;
 		return;
 	}
-
-	uint8_t buffer[3] = {reg, value >> 8, value & 0xFF};
+	uint8_t upper = static_cast<uint8_t> (value >> 8);
+	uint8_t lower = static_cast<uint8_t> (value & 0x00FF);
+	uint8_t buffer[3] = {reg, upper, lower};
 	if (write(i2cDescriptor, buffer, 3) != 3) {
 		cerr << "Can not write data. Address 0x" << hex << (int)address << "." << dec << endl;
 	}

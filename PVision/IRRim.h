@@ -14,6 +14,8 @@
 #include "../BlackServo/BlackServo.h"
 #include "../naughtyException/naughtyException.h"
 
+#include "../ADS1x15/ADS1X15.h"
+
 //TODO: Resolve write fail errors and deallocation delay
 
 using namespace std;
@@ -104,6 +106,8 @@ public:
 	IRReadResult read_IR(IRSensorPair pair, Blob* left_avg, Blob* right_avg);
 
 private:
+	Adafruit_ADS1115 lowADC;
+	Adafruit_ADS1115 highADC;
 	PCA9548A mux;
 	PVision* sensors;
 	BlackServo servo;
