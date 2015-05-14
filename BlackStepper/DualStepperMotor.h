@@ -18,9 +18,11 @@ private:
 	arduinoConnector kalduino;
 	PID pid;
 	unsigned int turn_bias;
-	uint8_t roll_adjust;
+	bool current_direction;
+	unsigned current_frequency;
+	float roll_adjust;
 
-	void adjustBalance();
+	void adjustBalance(bool direction, unsigned frequency);
 
 public:
 	DualStepperMotor(
@@ -29,7 +31,10 @@ public:
 		gpioName directionRight,
 		pwmName frequencyRight,
 		spiName kalman_spi_name,
-		gpioName kalman_reset_pin_name
+		gpioName kalman_reset_pin_name,
+		float pGain,
+		float iGain,
+		float dGain
 	);
 
 	void moveForward(unsigned int frequency);

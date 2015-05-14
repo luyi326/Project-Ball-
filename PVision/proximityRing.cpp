@@ -7,23 +7,36 @@ using namespace std;
 #define IN_ADC(i) (i%2)
 #define REAL_CHANNEL(i) (i/2)
 
+#define SAW_THREASHOLD (1200)
+
 proximityRing::proximityRing() :
 lowADC(ADS1115_ADDRESS_LOW),
 highADC(ADS1115_ADDRESS_HIGH),
 current_target() {
-	current_target.degree = 0;
-	current_target.distance = 0;
+	current_target.degree_low = 0;
+	current_target.degree_high = 0;
 	current_target.valid = false;
 }
 
 void proximityRing::pollRing() {
-	// for (uint8_t i = 0; i < 4; i++) {
-	// 	cout << "ADC low " << int(i) << ": " << lowADC.readADC_SingleEnded(i) << endl;
-	// }
-	// for (uint8_t i = 0; i < 4; i++) {
-	// 	cout << "ADC high " << int(i) << ": " << highADC.readADC_SingleEnded(i) << endl;
-	// }
-	cout << "ADC low " << int(0) << ": " << lowADC.readADC_SingleEnded(0) << endl;
+	uint16_t resultList[8];
+	uint8_t sawCount = 0;
+	for (uint8_t i = 0; i < 4; i++) {
+		resultList[i] = lowADC.readADC_SingleEnded(i);
+		if (resultList[i] < SAW_THREASHOLD) {
+			sawCount++;
+		}
+		// cout << "ADC low " << int(i) << ": " << lowADC.readADC_SingleEnded(i) << endl;
+	}
+	for (uint8_t i = 0; i < 4; i++) {
+		resultList[i + 4] = highADC.readADC_SingleEnded(i);
+		if (resultList[i] < SAW_THREASHOLD) {
+			sawCount++;
+		}
+		// cout << "ADC high " << int(i) << ": " << highADC.readADC_SingleEnded(i) << endl;
+	}
+
+	cout << highADC.readADC_SingleEnded(3) << endl;
 }
 
 proximity_target proximityRing::checkTarget(uint8_t sensor_index) {

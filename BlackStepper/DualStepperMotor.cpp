@@ -15,20 +15,26 @@ DualStepperMotor::DualStepperMotor(
 		gpioName directionRight,
 		pwmName frequencyRight,
 		spiName kalman_spi_name,
-		gpioName kalman_reset_pin_name
+		gpioName kalman_reset_pin_name,
+		float pGain,
+		float iGain,
+		float dGain
 	) :
 	leftStepper(directionLeft, frequencyLeft),
 	rightStepper(directionRight, frequencyRight),
 	kalduino(kalman_spi_name, kalman_reset_pin_name),
-	pid(0.8, 0.0f, 0.0f, 200, -200),
+	pid(pGain, iGain, dGain, 50, 0),
 	turn_bias(0),
+	current_direction(true),
+	current_frequency(0),
 	roll_adjust(0) {
 	uint8_t i = 0;
 	while (i < 3) {
 		float test_x_val = NAN;
 		int counter = 0;
-		while ((isnan(test_x_val) || abs(test_x_val) < ZERO_ERR) && counter <= 100000) {
+		while ((isnan(test_x_val) || abs(test_x_val) < ZERO_ERR) && counter <= 10000) {
 			test_x_val = kalduino.angleInfomation(arduinoConnector_KalmanX);
+			cout << counter << " " <<  test_x_val << endl;
 			counter++;
 			if (!(isnan(test_x_val) || abs(test_x_val) < ZERO_ERR)) {
 				//Init succeed
@@ -36,6 +42,8 @@ DualStepperMotor::DualStepperMotor(
 			}
 		}
 		kalduino.reset();
+		cout << "Try resetting arduino" << endl;
+		i++;
 	}
 	cerr << "Cannot initialize arduino in 3 tries" << endl;
 	exit(1);
@@ -46,71 +54,80 @@ DualStepperMotor::~DualStepperMotor() {
 	rightStepper.run(1, 100);
 }
 
-void DualStepperMotor::adjustBalance() {
+void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
 	cout << "Adjusting balance" << endl;
 	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX) - LEVEL;
 	float error = 0.0f;
+	float target = frequency / -200.0f;
+
 	int threashold = 2;
-	if (degree - LEVEL > threashold) {
-		error = degree - LEVEL - threashold;
-	} else if (degree - LEVEL < -threashold) {
-		error = degree - LEVEL + threashold;
+	if (degree - target > threashold) {
+		error = degree - threashold;
+	} else if (degree + target < -threashold) {
+		error = degree + threashold;
 	} else {
 		error = 0.0f;
 	}
 	float kernel = pid.kernel(error, degree);
+	if (kernel<5 && kernel >-5){
+		kernel = 0;
+	}
 	cout << "Degree: " << degree << " error: " << error << " kernel: " << kernel << endl;
 	roll_adjust = kernel;
-	leftStepper.setBias(-turn_bias - roll_adjust);
-	rightStepper.setBias(turn_bias + roll_adjust);
+	cout << "turn bias is now " << turn_bias << " roll adjust is " << roll_adjust << endl;
+	cout << "left is biased at " << int(- turn_bias + roll_adjust) << " right is biased at " << int(turn_bias + roll_adjust) << endl;
+	leftStepper.setBias(int(- turn_bias + roll_adjust));
+	rightStepper.setBias(int(turn_bias + roll_adjust));
 }
 
 //Public function
 
 
 void DualStepperMotor::moveForward(unsigned int frequency) {
+	adjustBalance(true, frequency);
+	current_direction = true;
+	current_frequency = frequency;
 	// Skip freq from -100 to 100
 	if (frequency == 0) {
 		frequency = 100;
-	} if (frequency > 0) {
+	} else if (frequency > 0) {
 		frequency += 100;
-	} else if (frequency < 0) {
-		frequency -= 100;
 	}
-	adjustBalance();
+	cout << "running at freq " << frequency << endl;
 	leftStepper.run(1, frequency);
 	rightStepper.run(0, frequency);
 }
 
 void DualStepperMotor::moveBackward(unsigned int frequency) {
+	adjustBalance(false, frequency);
+	current_direction = false;
+	current_frequency = frequency;
+	// Skip freq from -100 to 100
 	if (frequency == 0) {
 		frequency = 100;
-	} if (frequency > 0) {
+	} else if (frequency > 0) {
 		frequency += 100;
-	} else if (frequency < 0) {
-		frequency -= 100;
 	}
-	adjustBalance();
 	leftStepper.run(0, frequency);
 	rightStepper.run(1, frequency);
 }
 
 
 void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
-	adjustBalance();
+	adjustBalance(current_direction, current_frequency);
 	leftStepper.setAcceleration(acceration_step);
 	rightStepper.setAcceleration(acceration_step);
 }
 
 void DualStepperMotor::setBias(int bias) {
 	turn_bias = bias;
-	adjustBalance();
+	adjustBalance(current_direction, current_frequency);
 	// leftStepper.setBias(-bias);
 	// rightStepper.setBias(bias);
 }
 
 void DualStepperMotor::run() {
-	adjustBalance();
+	adjustBalance(current_direction, current_frequency);
 	leftStepper.run();
 	rightStepper.run();
 }

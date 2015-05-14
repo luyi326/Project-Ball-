@@ -6,8 +6,9 @@
 #include "../ADS1X15/ADS1X15.h"
 
 typedef struct {
-	int degree;
-	int distance;
+	int degree_low;
+	int degree_high;
+	// int distance;
 	bool valid;
 } proximity_target;
 

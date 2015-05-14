@@ -3,7 +3,7 @@
 
 class PID {
 public:
-	PID(float ig, float pg, float dg, float imax, float imin);
+	PID(float pg, float ig, float dg, float imax, float imin);
 	~PID();
 	float kernel(float error, float position);
 private:

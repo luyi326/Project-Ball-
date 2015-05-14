@@ -1,7 +1,9 @@
 #include "PID.h"
 
+#include <iostream>
+using namespace std;
 
-PID::PID(float ig, float pg, float dg, float imax, float imin) {
+PID::PID(float pg, float ig, float dg, float imax, float imin) {
 	dGain = dg;
 	iGain = ig;
 	pGain = pg;
@@ -17,7 +19,12 @@ PID::~PID() {
 
 float PID::kernel(float error, float position) {
 	float pTerm, dTerm, iTerm;
-	pTerm = pGain * error; // calculate the proportional term
+	pTerm = pGain * error * error; // calculate the proportional term
+	if (error < 0) {
+		pTerm = -pTerm-1.5;
+	}else{
+		pTerm+=1.5;
+	}
 	// calculate the integral state with appropriate limiting
 	iState += error;
 	if (iState > iMax) iState = iMax;
@@ -25,5 +32,6 @@ float PID::kernel(float error, float position) {
 	iTerm = iGain * (iState); // calculate the integral term
 	dTerm = dGain * (dState - position);
 	dState = position;
+	cout << "pTerm: " << pTerm << " iTerm: " << iTerm << endl;
 	return pTerm + dTerm + iTerm;
 }
