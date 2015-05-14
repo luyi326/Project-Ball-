@@ -29,7 +29,7 @@ int main (int argc, char* argv[]) {
     motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117);
     cout << "Setup concluded" << endl;
 
-    unsigned int freq = 100;
+    unsigned int freq = 0;
     if (argc >= 2) {
         freq = atoi(argv[1]);
     }

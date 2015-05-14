@@ -7,6 +7,8 @@ PID::PID(float ig, float pg, float dg, float imax, float imin) {
 	pGain = pg;
 	iMax = imax;
 	iMin = imin;
+	dState = 0;
+	iState = 0;
 }
 
 PID::~PID() {

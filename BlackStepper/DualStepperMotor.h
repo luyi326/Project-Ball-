@@ -18,7 +18,7 @@ private:
 	arduinoConnector kalduino;
 	PID pid;
 	unsigned int turn_bias;
-	uint8_t row_adjust;
+	uint8_t roll_adjust;
 
 	void adjustBalance();
 

@@ -17,12 +17,13 @@ current_target() {
 }
 
 void proximityRing::pollRing() {
-	for (uint8_t i = 0; i < 4; i++) {
-		cout << "ADC low " << int(i) << ": " << lowADC.readADC_SingleEnded(i) << endl;
-	}
-	for (uint8_t i = 0; i < 4; i++) {
-		cout << "ADC high " << int(i) << ": " << highADC.readADC_SingleEnded(i) << endl;
-	}
+	// for (uint8_t i = 0; i < 4; i++) {
+	// 	cout << "ADC low " << int(i) << ": " << lowADC.readADC_SingleEnded(i) << endl;
+	// }
+	// for (uint8_t i = 0; i < 4; i++) {
+	// 	cout << "ADC high " << int(i) << ": " << highADC.readADC_SingleEnded(i) << endl;
+	// }
+	cout << "ADC low " << int(0) << ": " << lowADC.readADC_SingleEnded(0) << endl;
 }
 
 proximity_target proximityRing::checkTarget(uint8_t sensor_index) {
