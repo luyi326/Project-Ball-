@@ -1,93 +1,84 @@
-#include <string.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <time.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
+#include <iostream>
+#include <cstdint>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <sys/fcntl.h>
-#include <sys/wait.h>
-#include <stdbool.h>
+#include <time.h>
+#include <unistd.h>
 
-void termination_handler(int signum)
-{
-    printf("Timer scaduto\n");
-    exit(0);
+using namespace std;
+
+timer_t t1;
+timer_t t2;
+
+void sigalrm_handler(int sig, siginfo_t *si, void *uc ) {
+    timer_t *tidp;
+    tidp = (timer_t*)si->si_value.sival_ptr;
+    if (*tidp == t1) {
+		cout << "Timer 1 triggered" << endl;
+    } else if (*tidp == t2) {
+		cout << "Timer 2 triggered" << endl;
+    }
 }
 
-int main()
-{
-    if (signal(SIGUSR1, termination_handler) == SIG_ERR)
-        printf("Cannot register SIGUSR1 handler\n");
+void sigint_handler(int signo) {
+	if (signo == SIGINT) {
+		cout << "\nReceived SIGINT" << endl;
+		exit(0);
+	}
+}
 
-    printf("Start\n");
-    printf("1\n");
-    struct sigevent sigeventStruct; // sigevent struct that will be used by timer1 timer
-    printf("2\n");
-    memset(&sigeventStruct, 0, sizeof sigeventStruct); // zero initialize struct
-    printf("3\n");
-    sigeventStruct.sigev_notify = SIGEV_SIGNAL; // kind of notification of timer1 expiration
-    printf("4\n");
-    sigeventStruct.sigev_signo = 10;
-    printf("5\n");
+static int makeTimer( timer_t *timerID, int expireMS, int intervalMS ) {
+	struct sigevent te;
+	struct itimerspec its;
+	struct sigaction sa;
+	int sigNo = SIGRTMIN;
 
-    timer_t timer1; // create a timer identifier
-    printf("6\n");
-    if(timer_create(_POSIX_MONOTONIC_CLOCK, &sigeventStruct, &timer1) == -1)
-    {
-        printf( "Errore timer_create: %s\n", strerror( errno ) );
-    }
+	/* Set up signal handler. */
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = sigalrm_handler;
+	sigemptyset(&sa.sa_mask);
+	if (sigaction(sigNo, &sa, NULL) == -1) {
+		perror("sigaction");
+	}
 
-    printf("7\n");
-    struct itimerspec tempoIniziale;
-    printf("8\n");
-    memset(&tempoIniziale, 0, sizeof tempoIniziale); // zero initialize struct
-    printf("9\n");
-    tempoIniziale.it_value.tv_nsec = 100000000;
-    //tempoIniziale.it_interval.tv_nsec = 10000;
-    printf("10\n");
+	/* Set and enable alarm */
+	te.sigev_notify = SIGEV_SIGNAL;
+	te.sigev_signo = sigNo;
+	te.sigev_value.sival_ptr = timerID;
+	timer_create(CLOCK_REALTIME, &te, timerID);
 
+	its.it_interval.tv_sec = 0;
+	its.it_interval.tv_nsec = intervalMS * 1000000;
+	its.it_value.tv_sec = 0;
+	its.it_value.tv_nsec = expireMS * 1000000;
+	timer_settime(*timerID, 0, &its, NULL);
 
-    if(timer_settime(timer1, 0, &tempoIniziale, NULL) == -1) // timer armed
-    {
-        printf( "Errore timer_settime: %s\n", strerror( errno ) );
-    }
-    printf("11\n");
-    for(int i = 0; i< 10; i++)
-    {
-        printf("ciclo %d\n", i);
-    }
+	return 1;
+}
 
-    struct sigaction oldSigAzione;
-    printf("12\n");
-    memset(&oldSigAzione, 0, sizeof oldSigAzione);
-    printf("13\n");
-    oldSigAzione.sa_handler = termination_handler;
-    printf("14\n");
-    sigemptyset (&oldSigAzione.sa_mask);
+int main() {
+	if (signal(SIGINT, &sigint_handler) == SIG_ERR) {
+		cout << "Cannot register SIGINT handler" << endl;
+		exit(1);
+	}
+	makeTimer(&t1, 100, 100);
+	makeTimer(&t2, 50, 50);
+	// struct itimerval timer = {0};
+	// /* Initial timeout value */
+	// timer.it_value.tv_sec = 0;
+	// timer.it_value.tv_usec = 500000;
 
-    printf("15\n");
-    oldSigAzione.sa_flags = 0;
+	// /* We want a repetitive timer */
+	// timer.it_interval.tv_sec = 0;
+	// timer.it_interval.tv_usec = 500000;
 
-    printf("16\n");
-    sigaction (SIGEV_SIGNAL, NULL, &oldSigAzione);
-    printf("17\n");
-    if(oldSigAzione.sa_handler == SIG_IGN)
-    {
-        printf("Segnale ignorato\n");
-    }
-    printf("18\n");
-    for(long i = 0; i < 10000000000000000; i++)
-    {
-
-    }
-    printf("19\n");
-    printf("number of expirations %d\n", timer_getoverrun(timer1));
-    return 0;
+	// /* Register Signal handler
+	// * And register for periodic timer with Kernel*/
+	// if (signal(SIGALRM, &sigalrm_handler) == SIG_ERR) {
+	// 	cout << "Cannot register SIGALRM handler" << endl;
+	// 	exit(1);
+	// }
+	// setitimer(ITIMER_REAL, &timer, NULL);
+	for (;;) {
+		usleep(1000000);
+	}
 }

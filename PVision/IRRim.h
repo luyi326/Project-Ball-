@@ -106,8 +106,6 @@ public:
 	IRReadResult read_IR(IRSensorPair pair, Blob* left_avg, Blob* right_avg);
 
 private:
-	Adafruit_ADS1115 lowADC;
-	Adafruit_ADS1115 highADC;
 	PCA9548A mux;
 	PVision* sensors;
 	BlackServo servo;

@@ -75,9 +75,9 @@ void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
 	cout << "Degree: " << degree << " error: " << error << " kernel: " << kernel << endl;
 	roll_adjust = kernel;
 	cout << "turn bias is now " << turn_bias << " roll adjust is " << roll_adjust << endl;
-	cout << "left is biased at " << int(- turn_bias + roll_adjust) << " right is biased at " << int(turn_bias + roll_adjust) << endl;
-	leftStepper.setBias(int(- turn_bias + roll_adjust));
-	rightStepper.setBias(int(turn_bias + roll_adjust));
+	cout << "left is biased at " << int(- float(turn_bias) + roll_adjust) << " right is biased at " << int(float(turn_bias) + roll_adjust) << endl;
+	leftStepper.setBias(int(- float(turn_bias) + roll_adjust));
+	rightStepper.setBias(int(float(turn_bias) + roll_adjust));
 }
 
 //Public function
@@ -111,7 +111,6 @@ void DualStepperMotor::moveBackward(unsigned int frequency) {
 	leftStepper.run(0, frequency);
 	rightStepper.run(1, frequency);
 }
-
 
 void DualStepperMotor::setAcceleration(unsigned int acceration_step) {
 	adjustBalance(current_direction, current_frequency);

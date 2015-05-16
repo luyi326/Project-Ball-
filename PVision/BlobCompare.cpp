@@ -3,72 +3,19 @@
 #include <cmath>
 using namespace std;
 
-inline BlobCluster sortedBlob(uint8_t result, PVision* pv);
-inline void invalidateBlob(Blob*);
+#define FULL_HORIZONTAL (1000)
+#define FULL_VERTICAL (750)
+#define HALF_HORIZONTAL (FULL_HORIZONTAL/2)
+#define HALF_VERTICAL (FULL_VERTICAL/2)
+#define LEFT_QUARTER_HORIZONTAL (FULL_HORIZONTAL/4)
+#define RIGHT_QUARTER_HORIZONTAL (3*FULL_HORIZONTAL/4)
 
-BlobCluster* normalize(uint8_t result_left, uint8_t result_right, PVision* pv_left, PVision* pv_right) {
-	// Sanitize results
-	result_left &= 0xF;
-	result_right &= 0xF;
-
-	BlobCluster sortet_left = sortedBlob(result_left, pv_left);
-	BlobCluster sortet_right = sortedBlob(result_right, pv_right);
-
-
-	// If both cameras see same amount of Blobs
-	if (sortet_left.validBlobCount == sortet_right.validBlobCount) {
-		// Number doesn't match, need alignment algorithm
-	} else if (sortet_left.validBlobCount == 0) {
-		// If left didn't see shit, no alignment is needed
-	} else if (sortet_left.validBlobCount == 1) {
-		// If right didn't see shit, no alignment is needed
-		if (sortet_right.validBlobCount == 0) {
-		} else {
-			// Right must have seen 2 blobs, left might have seen the right blob
-			sortet_left.second = sortet_left.first;
-			invalidateBlob(&sortet_left.first);
-		}
-	} else if (sortet_left.validBlobCount == 2) {
-		// If right didn't see shit, no alignment is needed
-		if (sortet_right.validBlobCount == 0) {
-		}
-		// Right must have seen 1 blobs, right might have seen the left blob, no alignment needed
-	}
-	BlobCluster* resultCluster = new BlobCluster[2];
-	resultCluster[0] = sortet_left;
-	resultCluster[1] = sortet_right;
-	// cout << resultCluster[0].first << endl;
-	// cout << resultCluster[0].second << endl;
-	// cout << resultCluster[1].first << endl;
-	// cout << resultCluster[1].second << endl;
-	return resultCluster;
-}
-
-inline BlobCluster sortedBlob(uint8_t result, PVision* pv) {
-	BlobCluster sortedResult;
-	sortedResult.validBlobCount = 0;
-	if ((result & BLOB1) && (result & BLOB2)) {
-		sortedResult.validBlobCount = 2;
-		if (pv->Blob1.X < pv->Blob2.X) {
-			sortedResult.first = pv->Blob1;
-			sortedResult.second = pv->Blob2;
-		} else {
-			sortedResult.first = pv->Blob2;
-			sortedResult.second = pv->Blob1;
-		}
-	} else if (result & BLOB1) {
-		sortedResult.validBlobCount = 1;
-		sortedResult.first = pv->Blob1;
-		invalidateBlob(&sortedResult.second);
-	}
-	return sortedResult;
-}
-
-inline void invalidateBlob(Blob* b) {
-	b->X = -1;
-	b->Y = -1;
-	b->Size = 1;
-}
+#define FULL_D_SENSOR (4.0f)
+#define HALF_D_SENSOR (FULL_D_SENSOR/2)
+#define PI (3.14159265)
+#define HALF_PI (1.57079632)
+#define TAN_16_5 (0.29621349496)
+#define TAN_11_5 (0.20345229942)
 
 Blob average(uint8_t result, PVision* pv) {
 	if (result & BLOB1) {
@@ -114,4 +61,85 @@ Blob average(uint8_t result, PVision* pv) {
 	avgBlob.X = int(lround(float(avgBlob.X) / count));
 	avgBlob.Y = int(lround(float(avgBlob.Y) / count));
 	return avgBlob;
+}
+
+float verticalDistance(uint8_t result, PVision* pv) {
+	float maxY = 0;
+	float minY = 700;
+	if (!result & BLOB2) {
+		return NAN;
+	}
+	if (result & BLOB1) {
+		if (pv->Blob1.Y > maxY) {
+			maxY = pv->Blob1.Y;
+		}
+		if (pv->Blob1.Y < minY) {
+			minY = pv->Blob1.Y;
+		}
+	}
+	if (result & BLOB2) {
+		if (pv->Blob2.Y > maxY) {
+			maxY = pv->Blob2.Y;
+		}
+		if (pv->Blob2.Y < minY) {
+			minY = pv->Blob2.Y;
+		}
+	}
+	if (result & BLOB3) {
+		if (pv->Blob3.Y > maxY) {
+			maxY = pv->Blob3.Y;
+		}
+		if (pv->Blob3.Y < minY) {
+			minY = pv->Blob3.Y;
+		}
+	}
+	if (result & BLOB4) {
+		if (pv->Blob4.Y > maxY) {
+			maxY = pv->Blob4.Y;
+		}
+		if (pv->Blob4.Y < minY) {
+			minY = pv->Blob4.Y;
+		}
+	}
+	float distance = maxY - minY;
+	if (distance < 5) {
+		return NAN;
+	}
+	return distance;
+}
+
+float running_avg(float distance) {
+	static bool initial = true;
+	static float avg = 0;
+	if (distance < 0) {
+		return avg;
+	}
+	if (initial) {
+		initial = false;
+		avg = distance;
+		return distance;
+	} else {
+		avg *= 0.99;
+		avg += 0.01 * distance;
+		if (fabs(avg - distance) > 5) {
+			return avg;
+		} else {
+			return distance;
+		}
+	}
+}
+
+double calculate_target_coordinate(int left_x, int right_x) {
+	double alpha = HALF_PI - atan(static_cast<double>(HALF_HORIZONTAL - left_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double beta = HALF_PI + atan(static_cast<double>(HALF_HORIZONTAL - right_x) / static_cast<double>(HALF_HORIZONTAL) * TAN_16_5);
+	double tan_alpha = tan(alpha);
+	double tan_beta = tan(beta);
+	double distance = tan_alpha * tan_beta / (tan_alpha + tan_beta) * FULL_D_SENSOR;
+	double filtered = running_avg(distance);
+	// #ifdef LOCALATION_DEBUG
+	// // cout << "left_x is " << left_x << " alpha is " << alpha << " in degrees: " << alpha * 180 / PI << endl;
+	// // cout << "right_x is " << right_x << " beta is " << beta << " in degrees: " << beta * 180 / PI << endl;
+	// cout << "IRRim::calculate_target_coordinate::distance = " << distance << " filtered = " << filtered << endl;;
+	// #endif
+	return filtered;
 }

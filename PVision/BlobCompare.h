@@ -8,5 +8,7 @@
 //Only up to 2 blobs are handled
 BlobCluster* normalize(uint8_t result_left, uint8_t result_right, PVision* pv_left, PVision* pv_right);
 Blob average(uint8_t result, PVision* pv);
+float verticalDistance(uint8_t result, PVision* pv);
+float running_avg(float distance);
 
 #endif

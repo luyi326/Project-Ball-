@@ -77,8 +77,6 @@ static PID_IRRim pid_back;
 
 //Constructor and destructor
 IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adcName feedbackPin) :
-	lowADC(ADS1115_ADDRESS_LOW),
-	highADC(ADS1115_ADDRESS_HIGH),
 	mux(muxResetPin),
 	servo(servoPin, feedbackPin),
 	sensor_count(0),
