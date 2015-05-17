@@ -32,17 +32,20 @@ DualStepperMotor::DualStepperMotor(
 	while (i < 3) {
 		float test_x_val = NAN;
 		int counter = 0;
+		cout << "Initializing IMU..." << flush;
 		while ((isnan(test_x_val) || abs(test_x_val) < ZERO_ERR) && counter <= 10000) {
 			test_x_val = kalduino.angleInfomation(arduinoConnector_KalmanX);
-			cout << counter << " " <<  test_x_val << endl;
+			// cout << counter << " " <<  test_x_val << endl;
 			counter++;
 			if (!(isnan(test_x_val) || abs(test_x_val) < ZERO_ERR)) {
 				//Init succeed
+				cout << " Done" << endl;
 				return;
 			}
 		}
 		kalduino.reset();
-		cout << "Try resetting arduino" << endl;
+		cout << "Failed" << endl;
+		// cout << "Try resetting arduino" << endl;
 		i++;
 	}
 	cerr << "Cannot initialize arduino in 3 tries" << endl;
@@ -55,7 +58,7 @@ DualStepperMotor::~DualStepperMotor() {
 }
 
 void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
-	cout << "Adjusting balance" << endl;
+	// cout << "Adjusting balance" << endl;
 	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX) - LEVEL;
 	float error = 0.0f;
 	float target = frequency / -200.0f;
@@ -72,10 +75,10 @@ void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
 	if (kernel<5 && kernel >-5){
 		kernel = 0;
 	}
-	cout << "Degree: " << degree << " error: " << error << " kernel: " << kernel << endl;
+	// cout << "Degree: " << degree << " error: " << error << " kernel: " << kernel << endl;
 	roll_adjust = kernel;
-	cout << "turn bias is now " << turn_bias << " roll adjust is " << roll_adjust << endl;
-	cout << "left is biased at " << int(- float(turn_bias) + roll_adjust) << " right is biased at " << int(float(turn_bias) + roll_adjust) << endl;
+	// cout << "turn bias is now " << turn_bias << " roll adjust is " << roll_adjust << endl;
+	// cout << "left is biased at " << int(- float(turn_bias) + roll_adjust) << " right is biased at " << int(float(turn_bias) + roll_adjust) << endl;
 	leftStepper.setBias(int(- float(turn_bias) + roll_adjust));
 	rightStepper.setBias(int(float(turn_bias) + roll_adjust));
 }
@@ -93,9 +96,29 @@ void DualStepperMotor::moveForward(unsigned int frequency) {
 	} else if (frequency > 0) {
 		frequency += 100;
 	}
-	cout << "running at freq " << frequency << endl;
+	// cout << "running at freq " << frequency << endl;
 	leftStepper.run(1, frequency);
 	rightStepper.run(0, frequency);
+}
+
+void DualStepperMotor::moveLeft(int angle) {
+	// int bias = angle * 15;
+	// cout << "Moving left 1" << endl;
+	turn_bias = angle * 10;
+	leftStepper.run(1, 2000);
+	// cout << "Moving left 2" << endl;
+	rightStepper.run(0, 3000);
+	// cout << "Moving left 3" << endl;
+	adjustBalance(true, 2000);
+	// cout << "Moving left 4" << endl;
+}
+
+void DualStepperMotor::moveRight(int angle) {
+	// int bias = angle * 15;
+	turn_bias = - angle * 10;
+	leftStepper.run(1, 3000);
+	rightStepper.run(0, 2000);
+	adjustBalance(true, 2000);
 }
 
 void DualStepperMotor::moveBackward(unsigned int frequency) {

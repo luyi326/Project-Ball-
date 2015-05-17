@@ -19,7 +19,13 @@ using namespace std;
 DualStepperMotor* motorPair;
 IRRim* rim;
 
+timer_t stepperIntID;
+timer_t IRRimIntID;
+
+
 void clean_up();
+void handleStepper();
+void handleIRRim();
 
 void sig_handler(int signo)
 {
@@ -29,6 +35,47 @@ void sig_handler(int signo)
         exit(0);
     }
 }
+
+// static void timerHandler( int sig, siginfo_t *si, void *uc ) {
+//     timer_t *tidp;
+
+//     tidp = (timer_t*)si->si_value.sival_ptr;
+
+//     if ( *tidp == stepperIntID )
+//         handleStepper();
+//     else if ( *tidp == IRRimIntID )
+//         handleIRRim();
+// }
+
+// static int makeTimer( timer_t *timerID, int expireMS, int intervalMS )
+// {
+//     struct sigevent te;
+//     struct itimerspec its;
+//     struct sigaction sa;
+//     int sigNo = SIGRTMIN;
+
+//     /* Set up signal handler. */
+//     sa.sa_flags = SA_SIGINFO;
+//     sa.sa_sigaction = timerHandler;
+//     sigemptyset(&sa.sa_mask);
+//     if (sigaction(sigNo, &sa, NULL) == -1) {
+//         perror("sigaction");
+//     }
+
+//     /* Set and enable alarm */
+//     te.sigev_notify = SIGEV_SIGNAL;
+//     te.sigev_signo = sigNo;
+//     te.sigev_value.sival_ptr = timerID;
+//     timer_create(CLOCK_REALTIME, &te, timerID);
+
+//     its.it_interval.tv_sec = 0;
+//     its.it_interval.tv_nsec = intervalMS * 1000000;
+//     its.it_value.tv_sec = 0;
+//     its.it_value.tv_nsec = expireMS * 1000000;
+//     timer_settime(*timerID, 0, &its, NULL);
+
+//     return 1;
+// }
 
 string ZeroPadNumber(int num)
 {
@@ -51,167 +98,103 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR) {
         cerr << "MAIN::Cannot register SIGINT handler" << endl;
     }
-    int retry_count = 0;
-    for(;;) {
+
+
+    // int retry_count = 0;
+    try {
+        motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117, 4.5f, 0.0f, 10.0f);
+        cout << "MAIN::Setup concluded" << endl;
+
+        uint64_t freq = 100;
+        int bias = 0;
+
+        motorPair->setAcceleration(700);
+        // cout << "MAIN::running at freq " << freq <<endl;
+        motorPair->moveForward(freq);
+        motorPair->setBias(bias);
+
         try {
-            motorPair = new DualStepperMotor(GPIO_15, EHRPWM0A, GPIO_47, EHRPWM2B);
-            cout << "MAIN::Setup concluded" << endl;
-
-            uint64_t freq = 100;
-            int bias = 0;
-
-            motorPair->setAcceleration(100);
-            cout << "MAIN::running at freq " << freq <<endl;
-            motorPair->moveForward(freq);
-            motorPair->setBias(bias);
-
-            try {
-                rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
-            } catch (naughty_exception ex) {
-                if (ex == naughty_exception_PVisionInitFail) {
-                    cerr << "MAIN::One or more IR sensors are malfunctioning, exiting" << endl;
-                    clean_up();
-                    exit(1);
-                }
-            }
-
-            PID pid_turn(0.5, 1.0f / 40, 1.0f / 80, 3, 0);
-
-            int lost_count = 0;
-            for(;;) {
-                timespec start;
-                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
-                int angle_bias = 0;
-                IR_target target;
-
-                if (!motorPair->targetSpeedReached()) {
-                    motorPair->run();
-                }
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                rim->run();
-                target = rim->run();
-
-                // if (target.distance < -2) target.distance = -target.distance;
-                if (target.target_located && target.distance > 20) {
-                    lost_count = 0;
-                    bool left_or_right = true;
-                    cout << "MAIN::target acquired" << endl;
-                    motorPair->setAcceleration(300);
-                    cout << target << endl;
-                    bool forward = true;
-                    if (target.angle >= 0 && target.angle < 180) {
-                        //turn left?
-                        left_or_right = true;
-                        angle_bias = target.angle;
-                    } else {
-                        //turn right?
-                        left_or_right = false;
-                        angle_bias = 360 - target.angle;
-                    }
-                    if (target.angle >= 90 && target.angle < 270) {
-                        left_or_right = !left_or_right;
-                        angle_bias = 180 - angle_bias;
-                        forward = false;
-                    }
-                    cout << "MAIN::angle bias is " << angle_bias << " to the " << (left_or_right?"left":"right") << endl;
-                    if (target.distance < 10) {
-                        cout << "MAIN::target is too close! abort!" << endl;
-                        delete motorPair;
-                        delete rim;
-                        exit(0);
-                    } else {
-                        // freq = (target.distance - 20) * 100 + 100;
-                        // if (target.distance > )
-                        freq = 5700;
-                        cout << "MAIN::distance = " << target.distance << " new freq = " << freq << endl;
-                        if (forward) {
-                            motorPair->moveForward(freq);
-                            cout << "MAIN::Setting speed to " << freq << endl;
-                        } else {
-                            motorPair->moveBackward(freq);
-                            cout << "MAIN::Setting speed to " << freq << endl;
-                        }
-                        float tmpBias = 0;
-                        int middle_angle = 0;
-                        if (left_or_right) {
-                            middle_angle = - angle_bias;
-                            if (forward)
-                                tmpBias = angle_bias * BIAS_COEFF;
-                            else
-                                tmpBias = -angle_bias * BIAS_COEFF;
-                        } else {
-                            if (forward)
-                                tmpBias =  -angle_bias * BIAS_COEFF;
-                            else
-                                tmpBias = angle_bias * BIAS_COEFF;
-                            middle_angle = angle_bias;
-                        }
-                        // cout << "main:: ck point 11" << endl;
-                        int middle_error = 0;
-                        if (middle_angle > 10) {
-                            middle_error = middle_angle - 10;
-                        } else if (middle_angle < -10) {
-                            middle_error = middle_angle + 10;
-                        } else {
-                            middle_error = 0;
-                        }
-                        bias = tmpBias;
-                        motorPair->setBias(tmpBias);
-                        cout << "MAIN::Setting bias to " << tmpBias << endl;
-                    }
-                } else {
-                    motorPair->setBias(0);
-                    if (lost_count < 15) {
-                        lost_count++;
-                        continue;
-                    }
-                    motorPair->setAcceleration(300);
-                    motorPair->moveForward(100);
-                    rim->force_seek();
-                    if (target.target_located) {
-                        cout << "MAIN::Target located but distance is too short" << endl;
-                    }
-                }
-                timespec stop;
-                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
-                timespec temp;
-                if ((stop.tv_nsec-start.tv_nsec)<0) {
-                    temp.tv_sec = stop.tv_sec-start.tv_sec-1;
-                    temp.tv_nsec = 1000000000+stop.tv_nsec-start.tv_nsec;
-                } else {
-                    temp.tv_sec = stop.tv_sec-start.tv_sec;
-                    temp.tv_nsec = stop.tv_nsec-start.tv_nsec;
-                }
-                cout << temp.tv_sec << "." << ZeroPadNumber(temp.tv_nsec) << endl;
-            }
-        } catch (...) {
-            clean_up();
-            retry_count++;
-            if (retry_count < 3) {
-                continue;
-            } else {
-                throw;
+            rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
+        } catch (naughty_exception ex) {
+            if (ex == naughty_exception_PVisionInitFail) {
+                cerr << "MAIN::One or more IR sensors are malfunctioning, exiting" << endl;
+                clean_up();
+                exit(1);
             }
         }
+
+        // PID pid_turn(0.5, 1.0f / 40, 1.0f / 80, 3, 0);
+
+        // int lost_count = 0;
+    } catch (...) {
+        clean_up();
+        throw;
+    }
+
+    // makeTimer(&stepperIntID, 3, 20); //20ms
+    // makeTimer(&IRRimIntID, 5, 5); //10ms
+    for (;;) {
+        // cout << "running " << endl;
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        // rim->run();
+        IR_target newTarget = rim->run();
+        // cout << newTarget << endl;
+        if (newTarget.target_located) {
+            // cout << "ir: " << newTarget.angle << endl;
+            int angle = newTarget.angle + 100;
+            if (angle < 0) {
+                angle += 360;
+            } else if (angle > 360) {
+                angle -= 360;
+            }
+            if (angle < 15 || angle > 345) {
+                motorPair->moveForward(3000);
+            } else if (angle <= 180) {
+                motorPair->moveLeft(angle);
+            } else {
+                // motorPair->moveForward(0);
+                motorPair->moveRight(angle - 180);
+            }
+            // cout << "raw: " << angle << endl;
+        } else {
+            motorPair->moveForward(0);
+        }
+        motorPair->run();
+        // usleep(10);
     }
 	return 0;
 }
+
+// void handleStepper() {
+//     motorPair->run();
+// }
+
+// void handleIRRim() {
+//     IR_target newTarget = rim->run();
+//     if (newTarget.target_located) {
+//         cout << newTarget.angle << endl;
+//     }
+// }
+
 
 void clean_up() {
     if (motorPair) {

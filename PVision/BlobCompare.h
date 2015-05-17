@@ -10,5 +10,5 @@ BlobCluster* normalize(uint8_t result_left, uint8_t result_right, PVision* pv_le
 Blob average(uint8_t result, PVision* pv);
 float verticalDistance(uint8_t result, PVision* pv);
 float running_avg(float distance);
-
+double calculate_target_coordinate(int left_x, int right_x);
 #endif

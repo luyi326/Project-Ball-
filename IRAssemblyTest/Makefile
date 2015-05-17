@@ -15,9 +15,10 @@ SERVO_DIR = ../BlackServo/
 PIXDIR = ../PVision/
 I2CDIR = ../I2CBase/
 PIDDIR = ../PID/
+ARDUINO_DIR = ../arduinoConnector/
 
-BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackADC.o
-BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackADC.h
+BLACK_LIB_OBJ = $(OBJDIR)BlackCore.o $(OBJDIR)BlackGPIO.o $(OBJDIR)BlackPWM.o $(OBJDIR)BlackADC.o $(OBJDIR)BlackSPI.o
+BLACK_LIB_HEADER = $(OBJDIR)BlackLib.h $(OBJDIR)BlackGPIO.h $(OBJDIR)BlackPWM.h $(OBJDIR)BlackADC.h $(OBJDIR)BlackSPI.h
 
 MOTOR_OBJ = BlackServo.o BlackStepper.o DualStepperMotor.o
 MOTOR_HEADER = $(STEPPER_DIR)BlackStepper.h $(SERVO_DIR)BlackServo.h $(STEPPER_DIR)DualStepperMotor.h
@@ -30,8 +31,8 @@ I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)
 
 all: $(TARGET)
 
-$(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I2C_HEADER) $(I2C_OBJ) $(PID_HEADER) $(PID_OBJ)
-	$(CC) $(CFLAGS) -o $(TARGET) main.cpp $(MOTOR_OBJ) $(BLACK_LIB_OBJ) $(I2C_OBJ) $(PID_OBJ)
+$(TARGET): $(BLACK_LIB_OBJ) $(MOTOR_OBJ) $(BLACK_LIB_HEADER) $(MOTOR_HEADER) $(I2C_HEADER) $(I2C_OBJ) $(PID_HEADER) $(PID_OBJ) arduinoConnector.o
+	$(CC) $(CFLAGS) -o $(TARGET) main.cpp $(MOTOR_OBJ) $(BLACK_LIB_OBJ) $(I2C_OBJ) $(PID_OBJ) arduinoConnector.o
 
 # Stepper. Servos and double steppers
 BlackStepper.o: $(STEPPER_DIR)BlackStepper.h $(OBJDIR)BlackPWM.h
@@ -61,6 +62,9 @@ BlobCompare.o: $(PIXDIR)BlobCompare.h
 
 PID.o: $(PIDDIR)PID.h
 	$(CC) $(CFLAGS) -c $(PIDDIR)PID.cpp
+
+arduinoConnector.o: $(ARDUINO_DIR)arduinoConnector.h $(OBJDIR)BlackSPI.h
+	$(CC) $(CFLAGS) -c $(ARDUINO_DIR)arduinoConnector.cpp
 
 IRRim.o: $(I2C_HEADER) $(BLACK_LIB_HEADER) $(SERVO_DIR)BlackServo.h $(PIXDIR)BlobCompare.h
 	$(CC) $(CFLAGS) -c $(PIXDIR)IRRim.cpp

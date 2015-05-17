@@ -14,7 +14,7 @@
 #include "../BlackServo/BlackServo.h"
 #include "../naughtyException/naughtyException.h"
 
-#include "../ADS1x15/ADS1X15.h"
+// #include "../ADS1x15/ADS1X15.h"
 
 //TODO: Resolve write fail errors and deallocation delay
 

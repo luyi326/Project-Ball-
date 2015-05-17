@@ -25,8 +25,8 @@ MOTOR_HEADER = $(SERVO_DIR)BlackServo.h
 PID_OBJ = PID.o
 PID_HEADER = $(PIDDIR)PID.h
 
-I2C_OBJ = I2CBase.o PCA9548A.o PVision.o  cameraRing.o
-I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)cameraRing.h
+I2C_OBJ = I2CBase.o PCA9548A.o PVision.o  cameraRing.o BlobCompare.o
+I2C_HEADER = $(I2CDIR)I2CBase.h $(PIXDIR)PCA9548A.h $(PIXDIR)PVision.h $(PIXDIR)cameraRing.h $(PIXDIR)BlobCompare.h
 
 all: $(TARGET)
 

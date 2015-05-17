@@ -11,17 +11,6 @@ using namespace std;
 // #define STEP_SIZE_FREQ 15
 #define DEFAULT_ACCEL_STEP 15
 
-#define PERIOD_MICRO_TO_FREQ(period) (1000000/period)
-#define FREQ_TO_PERIOD_MICRO(freq) (1000000/freq)
-
-#define PERIOD_MAX 10000
-#define PERIOD_MIN 170
-
-#define FREQ_MAX PERIOD_MICRO_TO_FREQ(PERIOD_MIN) // 5882
-#define FREQ_MIN PERIOD_MICRO_TO_FREQ(PERIOD_MAX) // 100
-
-#define BIAS_MAX 0.98
-
 /**
  * @brief Motor and ball hardware description
  */

@@ -22,8 +22,10 @@ using namespace BlackLib;
 typedef struct {
 	float distance_twoCam;
 	float distance_vertical;
+	float angle;
 	bool valid_twoCam;
 	bool valid_vertical;
+	bool located;
 } camearaRingTargetInfo;
 
 enum cameraRingSensorPair {
@@ -78,6 +80,7 @@ public:
 	void run();
 	bool targetLocked();
 	void reset();
+	cameraRingReadResult readCamera(cameraRingSensorPair pair, Blob* left_avg = NULL, Blob* right_avg = NULL);
 private:
 	PCA9548A mux;
 	PVision frontLeft;
@@ -90,9 +93,12 @@ private:
 	int front_angle_high;
 	int back_angle_low;
 	int back_angle_high;
+	cameraRingSensorPair following_pair;
 
-	int servo_current_target;
 	bool servo_current_edge_is_first;
+	int servo_current_target;
+
+	timespec target_last_seen_time;
 
 	camearaRingTargetInfo lastSeenTarget;
 
@@ -102,8 +108,7 @@ private:
 
 
 	void seek();
-	void follow();
-	cameraRingReadResult readCamera(cameraRingSensorPair pair);
+	camearaRingTargetInfo follow();
 	uint8_t retrieveCameraResult(cameraRingCamera camIndex);
 	inline int publicAngleToServoAngle(int publicAngle);
 	inline int servoAngleToPublicAngle(int servoAngle);

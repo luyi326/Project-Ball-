@@ -37,7 +37,7 @@ int main (int argc, char* argv[]) {
     }
     proximityRing ring;
     for (;;) {
-        ring.checkTarget(channel);
+        // ring.checkTarget(channel);
         // ring.checkTarget(1);
         // ring.pollRing();
         // cout << ring.currentTarget() << endl;

@@ -32,6 +32,6 @@ float PID::kernel(float error, float position) {
 	iTerm = iGain * (iState); // calculate the integral term
 	dTerm = dGain * (dState - position);
 	dState = position;
-	cout << "pTerm: " << pTerm << " iTerm: " << iTerm << " dTerm: " << dTerm << endl;
+	// cout << "pTerm: " << pTerm << " iTerm: " << iTerm << " dTerm: " << dTerm << endl;
 	return pTerm + dTerm + iTerm;
 }

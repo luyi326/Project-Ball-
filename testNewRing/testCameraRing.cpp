@@ -35,13 +35,15 @@ int main (int argc, char* argv[]) {
         cerr << "MAIN::Cannot register SIGINT handler" << endl;
     }
     cameraRing ring(EHRPWM1B, GPIO_48, AIN0);
-    ring.scanRange(low, high);
+    // ring.scanRange(low, high);
     // cameraRingTest ring0(GPIO_48, channel);
     // cameraRingTest ring1(GPIO_48, 1);
     // cameraRingTest ring2(GPIO_48, 2);
     // cameraRingTest ring3(GPIO_48, 3);
     for (;;) {
-        ring.run();
+        ring.readCamera(cameraRingSensorPairFront);
+        ring.readCamera(cameraRingSensorPairBack);
+        // ring.run();
     	// ring0.testChannel();
     	// ring1.testChannel();
     	// ring2.testChannel();

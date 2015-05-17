@@ -6,7 +6,7 @@
 #include "BlobCompare.h"
 
 // #define IR_RIM_DEBUG
-// #define QUICK_IR_RIM_DEBUG
+#define QUICK_IR_RIM_DEBUG
 #define LOCALATION_DEBUG
 
 // Assume the starting address is 0x04 beacause @Tony broke the first two ports.
@@ -115,17 +115,16 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::IRRim::Initializing sensor No. " << i + 1 << endl;
 			#endif
-			if (i == 0) {
-				cout << "Init sensor 0 to 0x20" << endl;
-				mux.selectChannel(0x20);
-			} else {
-
-				cout << "Init sensor " << i << " to " << PV_N(i) << endl;
-				mux.selectChannel(PV_N(i));
-			}
-			if (!sensors[i].init()) {
+			cout << "Init sensor " << i << " to channel " << PV_N(i) << endl;
+			mux.selectChannel(PV_N(i));
+			try {
+				if (!sensors[i].init()) {
+					cerr << "IRRim::IRRim::Sensor No. " << i + 1 << " not initialized correctly" << endl;
+					continue;
+				}
+			} catch (...) {
 				cerr << "IRRim::IRRim::Sensor No. " << i + 1 << " not initialized correctly" << endl;
-				continue;
+				throw;
 			}
 			#ifdef IR_RIM_DEBUG
 			cout << "IRRim::IRRim::Sensor No. " << i + 1 << " done." << endl;
@@ -150,6 +149,8 @@ IRRim::IRRim(uint8_t num_of_sensors, pwmName servoPin, gpioName muxResetPin, adc
 
 IRRim::~IRRim() {
 	mux.reset();
+	servo.move_to(90);
+	while (!servo.target_position_reached()) {}
 	// delete sensors;
 }
 
@@ -254,9 +255,9 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 				servo.set_tolerance(SERVO_SEEK_TOLERANCE);
 				servo_current_position = 0;
 				// current_lower_bound = current_upper_bound = servo_current_position;
-				return dummy_target;
 			}
-			return last_target;
+			return dummy_target;
+			// return last_target;
 		case IRReadResultBlobOnLeft:
 			middle_point = -left_avg.X;
 			#ifdef QUICK_IR_RIM_DEBUG
@@ -290,8 +291,8 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 			// cout << "IR is in the middle" << endl;
 			// cout << "Mid point: " << calculate_target_coordinate(sensors[0].Blob1.X, sensors[0].Blob1.Y, sensors[1].Blob1.X, sensors[1].Blob1.Y) << endl;
 			// cout << "Target location: " << target_location << endl;
-			cout << "IRRim::follow::middle_point: " << middle_point << endl;
-			cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
+			// cout << "IRRim::follow::middle_point: " << middle_point << endl;
+			// cout << "IRRim::follow::left coordinate: " << left_avg << ", right coordinate: " << right_avg << endl;
 			#endif
 			#ifdef LOCALATION_DEBUG
 			// cout << "IRRIM::follow::left_avg is " << left_avg << " right_avg is " << right_avg << " target_location is " << target_location << endl;
@@ -304,6 +305,11 @@ IR_target IRRim::follow(IRSensorPair following_pair) {
 
 	if (following_pair == IRSensorPairBack) {
 		new_target.angle += 180;
+		if (new_target.angle < 0) {
+			new_target.angle += 360;
+		} else if (new_target.angle > 360) {
+			new_target.angle -= 360;
+		}
 	}
 
 	last_target = new_target;
@@ -403,9 +409,9 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	PVision* pv2;
 	switch (pair) {
 		case IRSensorPairFront:
-			mux.selectChannel(PV_N(1));
+			mux.selectChannel(PV_N(0));
 			try {
-				result1 = sensors[1].readBlob();
+				result1 = sensors[0].readBlob();
 			} catch (naughty_exception e) {
 				switch (e) {
 					case naughty_exception_PVisionReadFail:
@@ -421,9 +427,9 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	            cerr << "Under flow happened in sensor 1" << endl;
 	            throw e;
 	        }
-			mux.selectChannel(0x20);
+			mux.selectChannel(PV_N(1));
 			try {
-				result2 = sensors[0].readBlob();
+				result2 = sensors[1].readBlob();
 			} catch (naughty_exception e) {
 				switch (e) {
 					case naughty_exception_PVisionReadFail:
@@ -439,8 +445,8 @@ IRReadResult IRRim::read_IR(IRSensorPair pair, Blob* _left_avg, Blob* _right_avg
 	            cerr << "Under flow happened in sensor 0" << endl;
 	            throw e;
 	        }
-			pv1 = &(sensors[1]);
-			pv2 = &(sensors[0]);
+			pv1 = &(sensors[0]);
+			pv2 = &(sensors[1]);
 		break;
 		case IRSensorPairBack:
 			mux.selectChannel(PV_N(2));
@@ -570,7 +576,7 @@ inline double IRRim::calculate_target_coordinate(int left_x, int right_x) {
 	#ifdef LOCALATION_DEBUG
 	// cout << "left_x is " << left_x << " alpha is " << alpha << " in degrees: " << alpha * 180 / PI << endl;
 	// cout << "right_x is " << right_x << " beta is " << beta << " in degrees: " << beta * 180 / PI << endl;
-	cout << "IRRim::calculate_target_coordinate::distance = " << distance << " filtered = " << filtered << endl;;
+	// cout << "IRRim::calculate_target_coordinate::distance = " << distance << " filtered = " << filtered << endl;;
 	#endif
 	return filtered;
 }

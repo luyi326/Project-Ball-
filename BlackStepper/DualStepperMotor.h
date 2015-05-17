@@ -17,7 +17,7 @@ private:
 	BlackStepper rightStepper;
 	arduinoConnector kalduino;
 	PID pid;
-	unsigned int turn_bias;
+	int turn_bias;
 	bool current_direction;
 	unsigned current_frequency;
 	float roll_adjust;
@@ -39,6 +39,8 @@ public:
 
 	void moveForward(unsigned int frequency);
 	void moveBackward(unsigned int frequency);
+	void moveLeft(int angle);
+	void moveRight(int angle);
 	void setAcceleration(unsigned int acceration_step);
 	void run();
 	void setBias(int bias);
