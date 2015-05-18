@@ -103,15 +103,12 @@ int main (int argc, char* argv[]) {
     // int retry_count = 0;
     try {
         motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117, 4.5f, 0.0f, 10.0f);
+        // motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117, 0.0f, 0.0f, 0.0f);
         cout << "MAIN::Setup concluded" << endl;
 
         uint64_t freq = 100;
         int bias = 0;
 
-        motorPair->setAcceleration(700);
-        // cout << "MAIN::running at freq " << freq <<endl;
-        motorPair->moveForward(freq);
-        motorPair->setBias(bias);
 
         try {
             rim = new IRRim(4, EHRPWM1B, GPIO_48, AIN0);
@@ -122,6 +119,11 @@ int main (int argc, char* argv[]) {
                 exit(1);
             }
         }
+
+        motorPair->setAcceleration(700);
+        // cout << "MAIN::running at freq " << freq <<endl;
+        motorPair->moveForward(0);
+        motorPair->setBias(bias);
 
         // PID pid_turn(0.5, 1.0f / 40, 1.0f / 80, 3, 0);
 
@@ -179,7 +181,7 @@ int main (int argc, char* argv[]) {
             motorPair->moveForward(0);
         }
         motorPair->run();
-        // usleep(10);
+         usleep(10);
     }
 	return 0;
 }

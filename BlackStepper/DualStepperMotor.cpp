@@ -7,7 +7,7 @@
 using namespace std;
 
 #define ZERO_ERR (0.000000001)
-#define LEVEL (-2.64081)
+// #define LEVEL (-2.64081)
 
 DualStepperMotor::DualStepperMotor(
 		gpioName directionLeft,
@@ -27,7 +27,8 @@ DualStepperMotor::DualStepperMotor(
 	turn_bias(0),
 	current_direction(true),
 	current_frequency(0),
-	roll_adjust(0) {
+	roll_adjust(0),
+	calibratedLevel(0.0f) {
 	uint8_t i = 0;
 	while (i < 3) {
 		float test_x_val = NAN;
@@ -40,6 +41,17 @@ DualStepperMotor::DualStepperMotor(
 			if (!(isnan(test_x_val) || abs(test_x_val) < ZERO_ERR)) {
 				//Init succeed
 				cout << " Done" << endl;
+				// int sampleCount = 0;
+				float level = 0;
+				cout << "Calibrating IMU..." << flush;
+				for (int sampleCount = 0; sampleCount < 100; sampleCount++) {
+					level += kalduino.angleInfomation(arduinoConnector_KalmanX);
+				}
+				level /= 100.0f;
+				calibratedLevel = level;
+				cout << " Done" << endl;
+				cout << calibratedLevel << endl;
+				// exit(0);
 				return;
 			}
 		}
@@ -59,20 +71,22 @@ DualStepperMotor::~DualStepperMotor() {
 
 void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
 	// cout << "Adjusting balance" << endl;
-	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX) - LEVEL;
+	float degree = kalduino.angleInfomation(arduinoConnector_KalmanX) - calibratedLevel;
+	// cout << "degree: " << degree << endl;
+	// cout << "Degree from arduino is " << (degree + calibratedLevel) << " LEVEL is now " << float(calibratedLevel) << ", fixed degree is now " << degree << endl;
 	float error = 0.0f;
 	float target = frequency / -200.0f;
 
 	int threashold = 2;
 	if (degree - target > threashold) {
 		error = degree - threashold;
-	} else if (degree + target < -threashold) {
+	} else if (degree + target < - threashold) {
 		error = degree + threashold;
 	} else {
 		error = 0.0f;
 	}
 	float kernel = pid.kernel(error, degree);
-	if (kernel<5 && kernel >-5){
+	if (kernel < 5 && kernel > -5){
 		kernel = 0;
 	}
 	// cout << "Degree: " << degree << " error: " << error << " kernel: " << kernel << endl;

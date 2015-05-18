@@ -21,6 +21,7 @@ private:
 	bool current_direction;
 	unsigned current_frequency;
 	float roll_adjust;
+	float calibratedLevel;
 
 	void adjustBalance(bool direction, unsigned frequency);
 
