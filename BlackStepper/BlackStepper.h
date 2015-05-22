@@ -30,8 +30,10 @@ private:
 	timespec _last_timestamp;
 
 	int _target_speed;
+	int _correction;
 	int _current_speed;
 	int _last_accel;
+	int _nominal_last_accel;
 	int _current_accelration_step;
 
 	// int _turn_freq_bias;
@@ -45,13 +47,15 @@ private:
 public:
 	BlackStepper(gpioName direction, pwmName frequency);
 	~BlackStepper();
-	void adjustSpeed(int speed);
-	void adjustSpeed();
+	void adjustSpeed(int speed, int correction);
+	void adjustSpeed(int correction);
 	void setSpeed(int speed);
 	void stop();
 	void setAcceleration(unsigned int acceration_step);
 
 	unsigned int getAcceleration();
+	float getLinearAcceleration();
+	float getLinearSpeed();
 	bool targetSpeedReached();
 
 };

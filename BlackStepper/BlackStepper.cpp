@@ -30,6 +30,8 @@ _frequency(frequency) {
 	_target_speed = 0;
 	_current_speed = 0;
 	_last_accel = 0;
+	_nominal_last_accel = 0;
+	_correction = 0;
 	_current_accelration_step = DEFAULT_ACCEL_STEP;
 	// _turn_freq_bias = 0;
 	stop();
@@ -68,15 +70,32 @@ inline bool BlackStepper::isLongEnough() {
 	return false;
 }
 
-void BlackStepper::adjustSpeed(int speed) {
-	_target_speed = speed;
-	adjustSpeed();
+float BlackStepper::getLinearAcceleration() {
+	return float(_nominal_last_accel) / STEP_INTERVAL * 100.0f;
 }
 
-void BlackStepper::adjustSpeed() {
+float BlackStepper::getLinearSpeed() {
+	int realFreq = 0;
+	if (_current_speed > 0) {
+		realFreq = _current_speed + 100;
+	} else if (-_current_speed < 0) {
+		realFreq = _current_speed - 100;
+	}
+	return LINEAR_SPEED(realFreq);
+}
+
+void BlackStepper::adjustSpeed(int speed, int correction) {
+	_target_speed = speed;
+	_correction = correction;
+	adjustSpeed(correction);
+}
+
+void BlackStepper::adjustSpeed(int correction) {
 	// cout << "in adj speed" << endl;
 	if (isLongEnough()) {
-		int speed_diff = abs(_target_speed - _current_speed);
+		int speed_diff = abs(_target_speed + correction - _current_speed);
+		int nominal_speed_diff = abs(_target_speed  - _current_speed);
+		// bool sameDirection = (_target_speed >= 0) ^ (_current_speed < 0);
 		// cout << "speed to go " << speed_diff << endl;
 		if (speed_diff == 0) {
 			_speedReached = true;
@@ -101,6 +120,17 @@ void BlackStepper::adjustSpeed() {
 				_current_speed -= _current_accelration_step;
 			}
 			setSpeed(_current_speed);
+		}
+
+		if (nominal_speed_diff == 0) {
+			_nominal_last_accel = 0;
+		} else if (nominal_speed_diff < _current_accelration_step) {
+			_nominal_last_accel = nominal_speed_diff;
+		} else {
+			_nominal_last_accel = _current_accelration_step;
+		}
+		if (_target_speed < 0) {
+			_nominal_last_accel = - _nominal_last_accel;
 		}
 		// cout << "New current speed is " << _current_speed << endl;
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &_last_timestamp);

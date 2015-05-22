@@ -35,48 +35,50 @@ int main (int argc, char* argv[]) {
         speed = atoi(argv[1]);
     }
 
-    stepper->adjustSpeed(speed);
+    stepper->adjustSpeed(speed, 0);
     while (!stepper->targetSpeedReached()) {
     	// cout << "last stepper speed: " << stepper->getSpeed() << endl;
-    	stepper->adjustSpeed();
+        cout << "acceleration is " << stepper->getLinearAcceleration() << " m/s^2" << endl;
+        stepper->adjustSpeed(0);
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper->adjustSpeed(-speed);
+    stepper->adjustSpeed(-speed, 0);
     while (!stepper->targetSpeedReached()) {
+        cout << "acceleration is " << stepper->getLinearAcceleration() << " m/s^2" << endl;
         // cout << "last stepper speed: " << stepper->getSpeed() << endl;
-        stepper->adjustSpeed();
+        stepper->adjustSpeed(0);
     }
     cout << "Motor in position" << endl;
     sleep(4);
-    stepper->adjustSpeed(200);
-    while (!stepper->targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
-        stepper->adjustSpeed();
-    }
-    cout << "Motor in position" << endl;
-    sleep(4);
-    stepper->adjustSpeed(400);
-    while (!stepper->targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
-        stepper->adjustSpeed();
-    }
-    cout << "Motor in position" << endl;
-    sleep(4);
-    stepper->adjustSpeed(200);
-    while (!stepper->targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
-        stepper->adjustSpeed();
-    }
-    cout << "Motor in position" << endl;
-    sleep(4);
-    stepper->adjustSpeed(-200);
-    while (!stepper->targetSpeedReached()) {
-        // cout << "last stepper speed: " << stepper->getSpeed() << endl;
-        stepper->adjustSpeed();
-    }
-    cout << "Motor in position" << endl;
-    sleep(4);
+    // stepper->adjustSpeed(200);
+    // while (!stepper->targetSpeedReached()) {
+    //     // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+    //     stepper->adjustSpeed();
+    // }
+    // cout << "Motor in position" << endl;
+    // sleep(4);
+    // stepper->adjustSpeed(400);
+    // while (!stepper->targetSpeedReached()) {
+    //     // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+    //     stepper->adjustSpeed();
+    // }
+    // cout << "Motor in position" << endl;
+    // sleep(4);
+    // stepper->adjustSpeed(200);
+    // while (!stepper->targetSpeedReached()) {
+    //     // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+    //     stepper->adjustSpeed();
+    // }
+    // cout << "Motor in position" << endl;
+    // sleep(4);
+    // stepper->adjustSpeed(-200);
+    // while (!stepper->targetSpeedReached()) {
+    //     // cout << "last stepper speed: " << stepper->getSpeed() << endl;
+    //     stepper->adjustSpeed();
+    // }
+    // cout << "Motor in position" << endl;
+    // sleep(4);
 
     delete stepper;
 	return 0;
