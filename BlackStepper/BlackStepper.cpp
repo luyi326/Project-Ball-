@@ -31,7 +31,7 @@ _frequency(frequency) {
 	_current_speed = 0;
 	_last_accel = 0;
 	_current_accelration_step = DEFAULT_ACCEL_STEP;
-	_turn_freq_bias = 0;
+	// _turn_freq_bias = 0;
 	stop();
 }
 
@@ -39,14 +39,6 @@ BlackStepper::~BlackStepper() {
 	stop();
 	usleep(200);
 }
-
-// void BlackStepper::run(bool direction, unsigned int frequency) {
-// 	setMovement(direction, frequency);
-// }
-
-// void BlackStepper::run() {
-// 	run(_target_direction, _target_freq);
-// }
 
 void BlackStepper::stop() {
 	setSpeed(0);
@@ -76,14 +68,16 @@ inline bool BlackStepper::isLongEnough() {
 	return false;
 }
 
-inline void BlackStepper::adjustSpeed(int speed) {
+void BlackStepper::adjustSpeed(int speed) {
 	_target_speed = speed;
 	adjustSpeed();
 }
 
-inline void BlackStepper::adjustSpeed() {
+void BlackStepper::adjustSpeed() {
+	// cout << "in adj speed" << endl;
 	if (isLongEnough()) {
 		int speed_diff = abs(_target_speed - _current_speed);
+		// cout << "speed to go " << speed_diff << endl;
 		if (speed_diff == 0) {
 			_speedReached = true;
 			_last_accel = 0;
@@ -108,6 +102,7 @@ inline void BlackStepper::adjustSpeed() {
 			}
 			setSpeed(_current_speed);
 		}
+		// cout << "New current speed is " << _current_speed << endl;
 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &_last_timestamp);
 	} else {
 
@@ -140,10 +135,11 @@ inline void BlackStepper::setSpeed(int speed) {
 	} else {
 		speed = 100;
 	}
-
 	if (speed > 0) {
+		// cout << "Setting speed to " << static_cast<unsigned int>(speed) << " direction to 0" << endl;
 		setGPIOAndPWM(false, static_cast<unsigned int>(speed));
 	} else {
+		// cout << "Setting speed to " << static_cast<unsigned int>(-speed) << " direction to 1" << endl;
 		setGPIOAndPWM(true, static_cast<unsigned int>(-speed));
 	}
 }

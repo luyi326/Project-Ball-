@@ -45,8 +45,9 @@ private:
 public:
 	BlackStepper(gpioName direction, pwmName frequency);
 	~BlackStepper();
-	adjustSpeed(int speed);
-	adjustSpeed();
+	void adjustSpeed(int speed);
+	void adjustSpeed();
+	void setSpeed(int speed);
 	void stop();
 	void setAcceleration(unsigned int acceration_step);
 
