@@ -15,6 +15,9 @@
 #define FREQ_MAX PERIOD_MICRO_TO_FREQ(PERIOD_MIN) // 5882
 #define FREQ_MIN PERIOD_MICRO_TO_FREQ(PERIOD_MAX) // 100
 
+#define SPEED_MAX (FREQ_MAX - 100)
+#define SPEED_MIN (FREQ_MIN - 100)
+
 #define BIAS_MAX 0.98
 
 using namespace BlackLib;
@@ -24,18 +27,14 @@ private:
 	BlackGPIO _direction;
 	BlackPWM _frequency;
 
-	//_current_direction, 0 : forward, 1: backward
-	bool _current_direction;
-	//_current_speed refers to frequency
-	unsigned int _current_freq;
-
 	timespec _last_timestamp;
 
-	bool _target_direction;
-	unsigned int  _target_freq;
-	unsigned int _current_accelration_step;
+	int _target_speed;
+	int _current_speed;
+	int _last_accel;
+	int _current_accelration_step;
 
-	int _turn_freq_bias;
+	// int _turn_freq_bias;
 
 	bool _speedReached;
 
@@ -46,17 +45,12 @@ private:
 public:
 	BlackStepper(gpioName direction, pwmName frequency);
 	~BlackStepper();
-
-	void run(bool direction, unsigned int frequency);
-	void run();
+	adjustSpeed(int speed);
+	adjustSpeed();
 	void stop();
 	void setAcceleration(unsigned int acceration_step);
-	void setBias(int bias);
 
-	bool getDirection();
-	unsigned int getFrequency();
 	unsigned int getAcceleration();
-	int getBias();
 	bool targetSpeedReached();
 
 };

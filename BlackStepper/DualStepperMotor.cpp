@@ -28,7 +28,8 @@ DualStepperMotor::DualStepperMotor(
 	current_direction(true),
 	current_frequency(0),
 	roll_adjust(0),
-	calibratedLevel(0.0f) {
+	calibratedLevel_X(0.0f),
+	calibratedLevel_Y(0.0f) {
 	uint8_t i = 0;
 	while (i < 3) {
 		float test_x_val = NAN;
@@ -42,16 +43,27 @@ DualStepperMotor::DualStepperMotor(
 				//Init succeed
 				cout << " Done" << endl;
 				// int sampleCount = 0;
+
 				float level = 0;
-				cout << "Calibrating IMU..." << flush;
+				cout << "Calibrating IMU X axis..." << flush;
 				for (int sampleCount = 0; sampleCount < 100; sampleCount++) {
 					level += kalduino.angleInfomation(arduinoConnector_KalmanX);
 				}
 				level /= 100.0f;
-				calibratedLevel = level;
+				calibratedLevel_X = level;
 				cout << " Done" << endl;
-				cout << calibratedLevel << endl;
-				// exit(0);
+				cout << calibratedLevel_X << endl;
+
+				level = 0;
+				cout << "Calibrating IMU Y axis..." << flush;
+				for (int sampleCount = 0; sampleCount < 100; sampleCount++) {
+					level += kalduino.angleInfomation(arduinoConnector_KalmanY);
+				}
+				level /= 100.0f;
+				calibratedLevel_Y = level;
+				cout << " Done" << endl;
+				cout << calibratedLevel_Y << endl;
+
 				return;
 			}
 		}
@@ -75,7 +87,7 @@ void DualStepperMotor::adjustBalance(bool direction, unsigned frequency) {
 	// cout << "degree: " << degree << endl;
 	// cout << "Degree from arduino is " << (degree + calibratedLevel) << " LEVEL is now " << float(calibratedLevel) << ", fixed degree is now " << degree << endl;
 	float error = 0.0f;
-	float target = frequency / -200.0f;
+	float target = frequency / -50.0f;
 
 	int threashold = 2;
 	if (degree - target > threashold) {

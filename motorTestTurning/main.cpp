@@ -12,22 +12,22 @@ using namespace BlackLib;
 using namespace std;
 
 DualStepperMotor* motorPair;
-timer_t stepperIntID;
-timer_t IRRimIntID;
+// timer_t stepperIntID;
+// timer_t IRRimIntID;
 
-static void timerHandler( int sig, siginfo_t *si, void *uc )
-{
-    timer_t *tidp;
+// static void timerHandler( int sig, siginfo_t *si, void *uc )
+// {
+//     timer_t *tidp;
 
-    tidp = si->si_value.sival_ptr;
+//     tidp = si->si_value.sival_ptr;
 
-    if ( *tidp == firstTimerID )
-        printf("2ms");
-    else if ( *tidp == secondTimerID )
-        printf("10ms\n");
-    else if ( *tidp == thirdTimerID )
-        printf("100ms\n\n");
-}
+//     if ( *tidp == firstTimerID )
+//         printf("2ms");
+//     else if ( *tidp == secondTimerID )
+//         printf("10ms\n");
+//     else if ( *tidp == thirdTimerID )
+//         printf("100ms\n\n");
+// }
 
 void sig_handler(int signo)
 {
@@ -43,37 +43,19 @@ int main (int argc, char* argv[]) {
     if (signal(SIGINT, sig_handler) == SIG_ERR)
         cout << "Cannot register SIGINT handler" << endl;
 
-    makeTimer(&stepperIntID, 2, 2); //2ms
-    makeTimer(&IRRimIntID, 10, 10); //10ms
 
     unsigned int freq = 0;
     if (argc >= 2) {
         freq = atoi(argv[1]);
     }
-    unsigned int bias = 0;
-    if (argc >= 3) {
-        bias = atoi(argv[2]);
-    }
-    float pGain = 0.08f;
-    if (argc >= 4) {
-        pGain = atof(argv[3]);
-    }
-    float iGain = 0.0f;
-    if (argc >= 5) {
-        iGain = atof(argv[4]);
-    }
-    float dGain = 0.0f;
-    if (argc >= 6) {
-        dGain = atof(argv[5]);
-    }
-    motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117, pGain, iGain, dGain);
+
+    motorPair = new DualStepperMotor(GPIO_15, EHRPWM0B, GPIO_27, EHRPWM2A, SPI0_0, GPIO_117, 4.5f, 0.0f, 10.0f);
     cout << "Setup concluded" << endl;
 
-    motorPair->setAcceleration(300);
-    cout << "running at freq " << freq << " and bias " << bias << endl;
+    motorPair->setAcceleration(400);
+    // cout << "running at freq " << freq << " and bias " << bias << endl;
     // exit(0);
     motorPair->moveForward(freq);
-    motorPair->setBias(bias);
     motorPair->run();
 
     while (1) {
